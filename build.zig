@@ -11,6 +11,7 @@ pub fn build(b: *std.build.Builder) !void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
+    // const optimize = .ReleaseFast;
 
     // Add your executable and configure with
     // target and optimize, specify your root file (ex. main.zig)

@@ -36,9 +36,9 @@ pub fn cross(a: Vec3, b: Vec3) Vec3 {
     return Vec3{ .vec = temp12 - temp34 };
 
     // return Self{
-    //     .x = a.y * b.z - a.z * b.y,
-    //     .y = a.z * b.x - a.x * b.z,
-    //     .z = a.x * b.y - a.y * b.x,
+    //     .vec[0] = a.vec[1] * b.vec[2] - a.vec[2] * b.vec[1],
+    //     .vec[1] = a.vec[2] * b.vec[0] - a.vec[0] * b.vec[2],
+    //     .vec[2] = a.vec[0] * b.vec[1] - a.vec[1] * b.vec[0],
     // };
 }
 
@@ -60,6 +60,22 @@ pub fn Vec(comptime length: comptime_int) type {
         //tested
         pub fn number(scalar: f32) Self {
             return Self{ .vec = @splat(scalar) };
+        }
+
+        pub fn add(a: Self, b: Self) Self {
+            return Self{ .vec = a.vec + b.vec };
+        }
+
+        pub fn sub(a: Self, b: Self) Self {
+            return Self{ .vec = a.vec - b.vec };
+        }
+
+        pub fn mul(a: Self, b: Self) Self {
+            return Self{ .vec = a.vec * b.vec };
+        }
+
+        pub fn div(a: Self, b: Self) Self {
+            return Self{ .vec = a.vec / b.vec };
         }
 
         //tested
@@ -88,6 +104,7 @@ pub fn Vec(comptime length: comptime_int) type {
         }
 
         //tested
+        //need further optimised
         pub fn norm(a: Self) Self {
             return Self{ .vec = a.vec / number(a.mag()).vec };
             // const den: f32 = len(a);
@@ -95,6 +112,7 @@ pub fn Vec(comptime length: comptime_int) type {
         }
 
         //tested
+        //need further optimised
         pub fn scale(a: Self, b: f32) Self {
             return Self{ .vec = a.vec * number(b).vec };
         }
@@ -143,6 +161,7 @@ pub fn Vec(comptime length: comptime_int) type {
     };
 }
 
+// zig test src/math/vec.vec[2]ig
 const std = @import("std");
 const expect = std.testing.expect;
 
@@ -319,4 +338,297 @@ test "cross" {
     const c: Vec3 = init3(0, 0, 1);
 
     try expect(cross(a, b).eq(c));
+}
+
+const time = std.time;
+test "init3" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    const w = 4;
+    _ = w;
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = init3(x, y, z);
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const v3: Vec3 = init3(x, y, z);
+    try expect(v3.vec[0] == x and v3.vec[1] == y and v3.vec[2] == z);
+}
+
+test "number3" {
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = Vec3.number(1);
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const v3: Vec3 = Vec3.number(1);
+    try expect(v3.vec[0] == 1 and v3.vec[1] == 1 and v3.vec[2] == 1);
+}
+
+test "max3" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    _ = z;
+    const w = 4;
+
+    const v3: Vec3 = init3(x, y, w);
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.max();
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const max = v3.max();
+    try expect(max == w);
+}
+
+test "min3" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    _ = z;
+    const w = 4;
+    const v3: Vec3 = init3(x, y, w);
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.min();
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const min = v3.min();
+    try expect(min == x);
+}
+test "dot3" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    const w = 4;
+    _ = w;
+
+    const v3: Vec3 = init3(x, y, z);
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.dot(v3);
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const dot = v3.dot(v3);
+    try expect(dot == 14);
+}
+
+test "sum3" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    const w = 4;
+    _ = w;
+
+    const v3: Vec3 = init3(x, y, z);
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.sum();
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const sum = v3.sum();
+
+    try expect(sum == 6);
+}
+
+test "len3" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    const w = 4;
+    _ = w;
+    const v3: Vec3 = init3(x, y, z);
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.mag();
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const mag = v3.mag();
+    try expect(mag == comptime @sqrt(14.0));
+}
+
+test "norm3" {
+    const esp = 0.001;
+
+    const v3: Vec3 = init3(3, 4, 1);
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.norm();
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const norm = v3.norm();
+
+    //vec 3
+    try expect(req(norm.vec[0], 3.0 / @sqrt(26.0), esp));
+    try expect(req(norm.vec[1], 4.0 / @sqrt(26.0), esp));
+    try expect(req(norm.vec[2], 1.0 / @sqrt(26.0), esp));
+}
+
+test "scale3" {
+    const x = 4;
+    const y = 4;
+    const z = 4;
+    const w = 4;
+    _ = w;
+
+    const v3: Vec3 = init3(x, y, z);
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.scale(0.25);
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const scale = v3.scale(0.25);
+
+    try expect(scale.vec[0] == 1 and scale.vec[1] == 1 and scale.vec[2] == 1);
+}
+
+test "eq3" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    const w = 4;
+    _ = w;
+
+    const v3: Vec3 = init3(x, y, z);
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.eq(v3);
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const eq = v3.eq(v3);
+    try expect(eq);
+}
+
+test "cross3" {
+    const a: Vec3 = init3(1, 0, 0);
+    const b: Vec3 = init3(0, 1, 0);
+    const c: Vec3 = init3(0, 0, 1);
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = cross(a, b);
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const cros = cross(a, b);
+
+    try expect(cros.eq(c));
+}
+
+test "add33" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    const w = 4;
+    _ = w;
+
+    const v3: Vec3 = init3(x, y, z);
+
+    // var timer = try time.Timer.start();
+    // const r = v3.vec + v3.vec;
+    // const v = init3(r[0], r[1], r[2]);
+    // std.debug.print("took {}ns\n", .{timer.lap()});
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.add(v3);
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const v = v3.add(v3);
+
+    try expect(v.vec[0] == 2 and v.vec[1] == 4 and v.vec[2] == 6);
+}
+
+test "sub33" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    const w = 4;
+    _ = w;
+
+    const v3: Vec3 = init3(x, y, z);
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.sub(v3);
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const v = v3.sub(v3);
+
+    try expect(v.vec[0] == 0 and v.vec[1] == 0 and v.vec[2] == 0);
+}
+
+test "mul33" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    const w = 4;
+    _ = w;
+
+    const v3: Vec3 = init3(x, y, z);
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.mul(v3);
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+    const v = v3.mul(v3);
+
+    try expect(v.vec[0] == 1 and v.vec[1] == 4 and v.vec[2] == 9);
+}
+
+test "div33" {
+    const x = 1;
+    const y = 2;
+    const z = 3;
+    const w = 4;
+    _ = w;
+
+    const v3: Vec3 = init3(x, y, z);
+
+    var timer = try time.Timer.start();
+    var i: u32 = 0;
+    while (i < 2000) : (i += 1) {
+        _ = v3.div(v3);
+    }
+    std.debug.print("took {}ns\n", .{timer.lap()});
+
+    const v = v3.div(v3);
+
+    try expect(v.vec[0] == 1 and v.vec[1] == 1 and v.vec[2] == 1);
 }
