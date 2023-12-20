@@ -11,6 +11,7 @@ const shader = @import("opengl_wrappers/shader.zig");
 const program = @import("opengl_wrappers/program.zig");
 const render = @import("opengl_wrappers/render.zig");
 const uni = @import("opengl_wrappers/uniform.zig");
+const cam = @import("opengl_wrappers/camera.zig");
 
 const log = std.log.scoped(.Engine);
 
@@ -126,12 +127,17 @@ fn GL_init() !void {
     norMatrixUniform = prog.addUniform("norMatrix");
     lgtUniform = prog.addUniform("lightPos");
 
-    projMatrix = mat.Mat4x4.perspective(40.0 * CDR, screen_width / screen_hight, 1, 1000);
-    viewMatrix = mat.Mat4x4.lookAt(
-        vec.init3(1, 1, 3),
-        vec.init3(0, 0, 0),
-        vec.init3(0, 1, 0),
-    );
+    // projMatrix = mat.Mat4x4.perspective(40.0 * CDR, screen_width / screen_hight, 1, 1000);
+    // viewMatrix = mat.Mat4x4.lookAt(
+    //     vec.init3(1, 1, 3),
+    //     vec.init3(0, 0, 0),
+    //     vec.init3(0, 1, 0),
+    // );
+
+    const camera = cam.camera.init(40, screen_width / screen_hight, 1, 100, vec.init3(1, 1, 3));
+    viewMatrix = camera.getViewMatrix();
+    projMatrix = camera.projection_matrix;
+
     const lighteye: vec.Vec4 = viewMatrix.MulVec(light);
     lgtUniform.sendVec4(lighteye);
 
