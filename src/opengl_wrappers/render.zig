@@ -21,24 +21,22 @@ pub const renderer = struct {
         };
 
         gl.genVertexArrays(1, &self.vertex_array_object);
-        gl.bindVertexArray(self.vertex_array_object);
-
         gl.genBuffers(1, &self.vertex_buffer_object);
         gl.genBuffers(1, &self.vertex_normal_object);
         gl.genBuffers(1, &self.vertex_index_object);
-        // gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
-        // gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_normal_object);
-        // gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_index_object);
+        gl.bindVertexArray(self.vertex_array_object);
+        gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
+        gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_normal_object);
+        gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_index_object);
 
         return self;
     }
 
     pub fn loadDatFile(self: *Self, allocator: Allocator, filename: []const u8) !void {
-        const dat = try file.DatFile.loadDatFile(allocator, filename);
-
+        const dat = try file.ObjectFile.loadDatFile(allocator, filename);
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
-        gl.bufferData(
-            gl.ARRAY_BUFFER,
+        gl.namedBufferData(
+            self.vertex_buffer_object,
             @as(isize, @intCast(dat.verts.len * @sizeOf(gl.GLfloat))),
             @ptrCast(&dat.verts[0]),
             gl.STATIC_DRAW,
@@ -47,8 +45,8 @@ pub const renderer = struct {
         gl.vertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 0, null);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_normal_object);
-        gl.bufferData(
-            gl.ARRAY_BUFFER,
+        gl.namedBufferData(
+            self.vertex_normal_object,
             @as(isize, @intCast(dat.normals.len * @sizeOf(f32))),
             @ptrCast(&dat.normals[0]),
             gl.STATIC_DRAW,
@@ -57,8 +55,8 @@ pub const renderer = struct {
         gl.vertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 0, null);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.vertex_index_object);
-        gl.bufferData(
-            gl.ELEMENT_ARRAY_BUFFER,
+        gl.namedBufferData(
+            self.vertex_index_object,
             @as(isize, @intCast(dat.elements.len * @sizeOf(u32))),
             @ptrCast(&dat.elements[0]),
             gl.STATIC_DRAW,
@@ -67,8 +65,8 @@ pub const renderer = struct {
         self.number_elements = dat.elements.len;
 
         dat.unload();
-        gl.bindVertexArray(0);
-        std.debug.print("self : {}\n", .{self});
+
+        gl.bindVertexArray(self.vertex_array_object);
     }
 
     pub fn destroy(self: Self) void {

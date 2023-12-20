@@ -7,23 +7,31 @@ const vec = @import("math/vec.zig");
 const time = std.time;
 const Tuple = std.meta.Tuple;
 
-const shader_loader = @import("opengl_wrappers/shader.zig");
+const shader = @import("opengl_wrappers/shader.zig");
+const program = @import("opengl_wrappers/program.zig");
+const render = @import("opengl_wrappers/render.zig");
+const uni = @import("opengl_wrappers/uniform.zig");
 
 const log = std.log.scoped(.Engine);
 
-var VAO: gl.GLuint = undefined;
-var mvpMatrixLoc: gl.GLint = undefined;
-var mvMatrixLoc: gl.GLint = undefined;
-var norMatrixLoc: gl.GLint = undefined;
-var lgtLoc: gl.GLint = undefined;
+var mvpMatrixUniform: uni.Uniform = undefined;
+var mvMatrixUniform: uni.Uniform = undefined;
+var norMatrixUniform: uni.Uniform = undefined;
+var lgtUniform: uni.Uniform = undefined;
 
 var angle: f32 = 0;
 const CDR: f32 = std.math.pi / 180.0;
+
+var seaShell1: render.renderer = undefined;
+var seaShell2: render.renderer = undefined;
+
 var viewMatrix: mat.Mat4x4 = undefined;
 var projMatrix: mat.Mat4x4 = undefined;
-
 var num_triangles: usize = undefined;
 var keep_running = false;
+
+const screen_hight = 1080;
+const screen_width = 1920;
 
 fn glGetProcAddress(p: glfw.GLProc, proc: [:0]const u8) ?gl.FunctionPointer {
     _ = p;
@@ -57,7 +65,7 @@ pub fn main() !void {
     defer glfw.terminate();
 
     // Create our window
-    const window = glfw.Window.create(1920, 1080, "game-shit-dwag", null, null, .{
+    const window = glfw.Window.create(screen_width, screen_hight, "game-shit-dwag", null, null, .{
         .opengl_profile = .opengl_core_profile,
         .context_version_major = 4,
         .context_version_minor = 5,
@@ -91,120 +99,92 @@ pub fn main() !void {
         // std.debug.print("angle = {}\n", .{angle});
         // gl.clearColor(1, 0, 1, 1);
         // gl.clear(gl.COLOR_BUFFER_BIT);
-        try GL_Render();
+        GL_Render();
         window.swapBuffers();
     }
     keep_running = true;
 }
 
-fn loadSeaShell() !void {
+fn GL_init() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    const dat = try file_reader.DatFile.loadDatFile(allocator, "objects/Seashell.dat");
-
-    gl.genVertexArrays(1, &VAO);
-    gl.bindVertexArray(VAO);
-
-    var VBOids: [3]gl.GLuint = undefined;
-
-    gl.genBuffers(3, &VBOids);
-    // std.debug.print("VBO {} {} {}", .{ VBOids[0], VBOids[1], VBOids[2] });
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, VBOids[0]);
-    gl.bufferData(
-        gl.ARRAY_BUFFER,
-        @as(isize, @intCast(dat.verts.len * @sizeOf(gl.GLfloat))),
-        @ptrCast(&dat.verts[0]),
-        gl.STATIC_DRAW,
-    );
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 0, null);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, VBOids[1]);
-    gl.bufferData(
-        gl.ARRAY_BUFFER,
-        @as(isize, @intCast(dat.normals.len * @sizeOf(f32))),
-        @ptrCast(&dat.normals[0]),
-        gl.STATIC_DRAW,
-    );
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 0, null);
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, VBOids[2]);
-    gl.bufferData(
-        gl.ELEMENT_ARRAY_BUFFER,
-        @as(isize, @intCast(dat.elements.len * @sizeOf(u32))),
-        @ptrCast(&dat.elements[0]),
-        gl.STATIC_DRAW,
-    );
-
-    num_triangles = dat.elements.len;
-
-    dat.unload();
-
-    gl.bindVertexArray(0);
-}
-
-fn GL_init() !void {
     const light: vec.Vec4 = vec.init4(-20, 5, 0, 1);
 
-    var program = try shader_loader.createShaderProgram(
+    var prog = program.Program.init();
+    try prog.add_vert_n_frag(
+        allocator,
         "shaders/Seashell.vert",
         "shaders/Seashell.frag",
     );
+    prog.link();
+    prog.use();
 
-    mvMatrixLoc = gl.getUniformLocation(program, "mvMatrix");
-    mvpMatrixLoc = gl.getUniformLocation(program, "mvpMatrix");
-    norMatrixLoc = gl.getUniformLocation(program, "norMatrix");
-    lgtLoc = gl.getUniformLocation(program, "lightPos");
+    mvMatrixUniform = prog.addUniform("mvMatrix");
+    mvpMatrixUniform = prog.addUniform("mvpMatrix");
+    norMatrixUniform = prog.addUniform("norMatrix");
+    lgtUniform = prog.addUniform("lightPos");
 
-    projMatrix = mat.Mat4x4.perspective(40.0 * CDR, 1, 1, 10);
+    projMatrix = mat.Mat4x4.perspective(40.0 * CDR, screen_width / screen_hight, 1, 1000);
     viewMatrix = mat.Mat4x4.lookAt(
-        vec.init3(-1, -1, 1),
+        vec.init3(1, 1, 3),
         vec.init3(0, 0, 0),
         vec.init3(0, 1, 0),
     );
     const lighteye: vec.Vec4 = viewMatrix.MulVec(light);
-    gl.uniform4fv(lgtLoc, 1, @ptrCast(&lighteye.vec[0]));
+    lgtUniform.sendVec4(lighteye);
+
+    // gl.uniform4fv(lgtLoc, 1, @ptrCast(&lighteye.vec[0]));
 
     gl.clearColor(1, 1, 1, 1);
     gl.enable(gl.DEPTH_TEST); // cull face
-    // gl.cullFace(gl.BACK); // cull back face
+    gl.cullFace(gl.BACK); // cull back face
 
-    try loadSeaShell();
+    // try loadSeaShell();
+    seaShell1 = render.renderer.init();
+    seaShell2 = render.renderer.init();
+    try seaShell1.loadDatFile(allocator, "objects/Seashell.dat");
+    try seaShell2.loadDatFile(allocator, "objects/Seashell.dat");
 
     // gl.frontFace(gl.CW); // GL_CCW for counter clock-wise
 
 }
 
-fn GL_Render() !void {
+fn GL_Render() void {
     // const ident: mat.Mat4x4 = mat.Mat4x4.idenity();
     // _ = ident;
     // const rotationMatrix = ident.rotate(angle * CDR, vec.init3(0, 0, 1));
-
-    const mvMatrix = viewMatrix.rotate(angle * CDR, vec.init3(1, 1, 1)); // roatating camera
-
+    // const invMatrix = mvMatrix.t();
     // const mvMatrix = viewMatrix.mul(rotationMatrix);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    const mvMatrix = viewMatrix.mul(mat.Mat4x4.rotate_y(angle * CDR));
     const mvpMatrix = mvMatrix.mul(projMatrix);
     const invMatrix = mvMatrix.inverseTranspose();
 
-    // std.debug.print("mv\n", .{});
-    // rotationMatrix.debug_print_matrix();
-    // viewMatrix.debug_print_matrix();
-    // mvMatrix.debug_print_matrix(); //
-    // mvpMatrix.debug_print_matrix(); //
-    // invMatrix.debug_print_matrix();
+    mvMatrixUniform.sendMatrix4(gl.FALSE, mvMatrix);
+    mvpMatrixUniform.sendMatrix4(gl.FALSE, mvpMatrix);
+    norMatrixUniform.sendMatrix4(gl.FALSE, invMatrix);
 
-    gl.uniformMatrix4fv(mvMatrixLoc, 1, gl.FALSE, @ptrCast(&mvMatrix.vec[0]));
-    gl.uniformMatrix4fv(mvpMatrixLoc, 1, gl.FALSE, @ptrCast(&mvpMatrix.vec[0]));
-    gl.uniformMatrix4fv(norMatrixLoc, 1, gl.FALSE, @ptrCast(&invMatrix.vec[0]));
+    seaShell1.render();
     // mvMatrix.debug_print_matrix();
 
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const mvMatrix1 = viewMatrix.mul(mat.Mat4x4.rotate_y(angle * CDR))
+        .mul(mat.Mat4x4.translate(vec.init3(0, 0, 0)));
+
+    const mvpMatrix1 = mvMatrix1.mul(projMatrix);
+    const invMatrix1 = mvMatrix1.inverseTranspose();
+
+    mvMatrixUniform.sendMatrix4(gl.FALSE, mvMatrix1);
+    mvpMatrixUniform.sendMatrix4(gl.FALSE, mvpMatrix1);
+    norMatrixUniform.sendMatrix4(gl.FALSE, invMatrix1);
+
+    seaShell2.render();
+
     // gl.clear();
-    gl.bindVertexArray(VAO);
-    gl.drawElements(gl.TRIANGLES, @as(gl.GLsizei, @intCast(num_triangles)), gl.UNSIGNED_INT, null);
+    // gl.bindVertexArray(VAO);
+    // gl.drawElements(gl.TRIANGLES, @as(gl.GLsizei, @intCast(num_triangles)), gl.UNSIGNED_INT, null);
+
     gl.flush();
 }

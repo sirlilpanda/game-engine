@@ -1,21 +1,21 @@
 const std = @import("std");
-const b = std.builtin;
+const builtin = @import("builtin");
 const Allocator = std.mem.Allocator;
 const mem = std.mem;
 
-//[TODO] need to make this detemerned by os
-const eol: []const u8 = "\r\n";
+const eol: []const u8 = if (builtin.os.tag == .windows) "\r\n" else "\n";
 
 pub const DatFileError = error{
     MalFormedLine,
 };
 
-pub const DatFile = struct {
+pub const ObjectFile = struct {
     const Self = @This();
 
     verts: []f32,
     normals: []f32,
     elements: []u32,
+    texture: []f32,
     allocator: Allocator,
 
     pub fn loadDatFile(allocator: Allocator, filename: []const u8) !Self {
@@ -26,10 +26,11 @@ pub const DatFile = struct {
         const num_verts: usize = try std.fmt.parseInt(usize, top.first(), 10);
         const num_triangle = try std.fmt.parseInt(usize, top.next() orelse " ", 10);
 
-        const data: DatFile = DatFile{
+        const data: ObjectFile = ObjectFile{
             .verts = try allocator.alloc(f32, num_verts * 3),
             .normals = try allocator.alloc(f32, num_verts * 3),
             .elements = try allocator.alloc(u32, num_triangle * 3),
+            .texture = undefined,
             .allocator = allocator,
         };
 
@@ -70,6 +71,22 @@ pub const DatFile = struct {
         return data;
     }
 
+    pub fn change_ori(self: Self, x: f32, y: f32, z: f32) void {
+        var i: usize = 0;
+        while (i < self.verts.len) : (i += 3) {
+            self.verts[i] += x;
+            self.verts[i + 1] += y;
+            self.verts[i + 2] += z;
+        }
+        i = 0;
+
+        // while (i < self.normals.len) : (i += 3) {
+        //     self.normals[i] += x;
+        //     self.normals[i + 1] += y;
+        //     self.normals[i + 2] += z;
+        // }
+    }
+
     pub fn unload(file: Self) void {
         file.allocator.free(file.elements);
         file.allocator.free(file.verts);
@@ -77,12 +94,27 @@ pub const DatFile = struct {
     }
 };
 
-test "load_data" {
+test "load_dat_file" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    const d = try DatFile.loadDatFile(allocator, "objects/Seashell.dat");
+    const d = try ObjectFile.loadDatFile(allocator, "objects/Seashell.dat");
+
+    std.debug.print("\nverts {}: \n", .{d.elements.len});
+    for (d.elements) |v| {
+        std.debug.print("{}\n", .{v});
+    }
+
+    d.unload();
+}
+
+test "load_obj_file" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    const d = try ObjectFile.loadDatFile(allocator, "objects/Seashell.dat");
 
     std.debug.print("\nverts {}: \n", .{d.elements.len});
     for (d.elements) |v| {

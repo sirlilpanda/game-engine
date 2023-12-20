@@ -249,7 +249,7 @@ pub const Mat4x4 = struct {
     }
 
     //needs optimised for simd
-    pub fn rotate(mat: Self, angle: f32, v: vect.Vec3) Self {
+    pub fn rotate(angle: f32, v: vect.Vec3) Self {
         // https://github.com/g-truc/glm/blob/0.9.5/glm/gtc/matrix_transform.inl#L48
         const c = @cos(angle);
         const s = @sin(angle);
@@ -264,7 +264,63 @@ pub const Mat4x4 = struct {
             0,                                   0,                                   0,                                   1,
         };
         //could speed this up but its hard
-        return (Mat4x4{ .vec = rotation_matrix }).mul(mat);
+        return Mat4x4{ .vec = rotation_matrix };
+    }
+
+    pub fn rotate_x(angle: f32) Self {
+        const c = @cos(angle);
+        const s = @sin(angle);
+        const rotation_matrix = @Vector(16, f32){
+            c, -s, 0, 0,
+            s, c,  0, 0,
+            0, 0,  1, 0,
+            0, 0,  0, 1,
+        };
+        return Mat4x4{ .vec = rotation_matrix };
+    }
+
+    pub fn rotate_y(angle: f32) Self {
+        const c = @cos(angle);
+        const s = @sin(angle);
+        const rotation_matrix = @Vector(16, f32){
+            1, 0, 0,  0,
+            0, c, -s, 0,
+            0, s, c,  0,
+            0, 0, 0,  1,
+        };
+        return Mat4x4{ .vec = rotation_matrix };
+    }
+
+    pub fn rotate_z(angle: f32) Self {
+        const c = @cos(angle);
+        const s = @sin(angle);
+        const rotation_matrix = @Vector(16, f32){
+            c,  0, s, 0,
+            0,  1, 0, 0,
+            -s, 0, c, 0,
+            0,  0, 0, 1,
+        };
+        return Mat4x4{ .vec = rotation_matrix };
+    }
+
+    pub fn translate(location: vect.Vec3) Self {
+        const translation_matrix = @Vector(16, f32){
+            1, 0, 0, location.vec[0],
+            0, 1, 0, location.vec[1],
+            0, 0, 1, location.vec[2],
+            0, 0, 0, 1,
+        };
+        return Mat4x4{ .vec = translation_matrix };
+    }
+
+    pub fn scale(s: vect.Vec3) Self {
+        const scale_matrix = @Vector(16, f32){
+            s.vec[0], 0,        0,        0,
+            0,        s.vec[1], 0,        0,
+            0,        0,        s.vec[2], 0,
+            0,        0,        0,        1,
+        };
+        return Mat4x4{ .vec = scale_matrix };
     }
 
     //god i love simd vectors
@@ -338,27 +394,6 @@ pub const Mat4x4 = struct {
         const inverse = inverse_step / det;
 
         return Self{ .vec = inverse };
-    }
-
-    pub fn toArray(mat: Self) [16]f32 {
-        return [16]f32{
-            mat.vec[0],
-            mat.vec[1],
-            mat.vec[2],
-            mat.vec[3],
-            mat.vec[4],
-            mat.vec[5],
-            mat.vec[6],
-            mat.vec[7],
-            mat.vec[8],
-            mat.vec[9],
-            mat.vec[10],
-            mat.vec[11],
-            mat.vec[12],
-            mat.vec[13],
-            mat.vec[14],
-            mat.vec[15],
-        };
     }
 
     pub fn debug_print_matrix(mat: Self) void {

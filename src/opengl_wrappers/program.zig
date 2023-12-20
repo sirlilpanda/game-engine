@@ -1,6 +1,7 @@
 const gl = @import("gl");
 const shader = @import("shader.zig");
 const std = @import("std");
+const uniform = @import("uniform.zig");
 const Allocator = std.mem.Allocator;
 
 const AMOUNT_OF_SHADERS = 8;
@@ -44,8 +45,19 @@ pub const Program = struct {
         gl.attachShader(self.program_id, s.id);
     }
 
+    pub fn addUniform(self: Self, name: []const u8) uniform.Uniform {
+        return uniform.Uniform{
+            .name = name,
+            .location = gl.getUniformLocation(self.program_id, @ptrCast(name)),
+        };
+    }
+
     pub fn link(self: Self) void {
         gl.linkProgram(self.program_id);
+    }
+
+    // this was done so i can swap programs
+    pub fn use(self: Self) void {
         gl.useProgram(self.program_id);
     }
 

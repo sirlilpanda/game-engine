@@ -52,16 +52,23 @@ pub const Shader = struct {
         var shader_id = gl.createShader(shader_type);
         gl.shaderSource(shader_id, 1, @ptrCast(&shaderfile), null);
         gl.compileShader(shader_id);
-        try chech_status(shader_id);
-        std.debug.print("check : {any}\n", .{chech_status(shader_id)});
+        try chech_status(shader_id, allocator);
 
         return Self{ .id = shader_id };
     }
 
-    fn chech_status(shader_id: gl.GLuint) ShaderErrors!void {
+    fn chech_status(shader_id: gl.GLuint, allocator: Allocator) !void {
         var status: gl.GLint = undefined;
         gl.getShaderiv(shader_id, gl.COMPILE_STATUS, &status);
-        if (status == gl.FALSE) return ShaderErrors.failed_to_compile;
+        if (status == gl.FALSE) {
+            var info_log_len: gl.GLsizei = undefined;
+            gl.getShaderiv(shader_id, gl.INFO_LOG_LENGTH, &info_log_len);
+            const error_string: []u8 = try allocator.alloc(u8, @as(usize, @intCast(info_log_len)));
+            defer allocator.free(error_string);
+            gl.getShaderInfoLog(shader_id, info_log_len, null, @ptrCast(&error_string[0]));
+            std.debug.print("[ERROR] : {s}\n", .{error_string});
+            return ShaderErrors.failed_to_compile;
+        }
     }
 
     pub fn unload(self: Self) void {
