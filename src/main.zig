@@ -1,7 +1,6 @@
 const std = @import("std");
 const glfw = @import("mach-glfw");
 const gl = @import("gl");
-const file_reader = @import("loadfile.zig");
 const mat = @import("math/matrix.zig");
 const vec = @import("math/vec.zig");
 const time = std.time;
@@ -49,7 +48,7 @@ var i: u8 = 0;
 
 fn spin() void {
     while (!keep_running) {
-        std.debug.print("{d:.2}, {d:.2}\r", .{ @reduce(.Add, win), angle });
+        std.debug.print("{d:.2}, {d:.2}, pos : {}, lookat : {}\r", .{ @reduce(.Add, win), angle, camera.eye, camera.look_at_point });
         angle += 0.5;
         // std.debug.print("angle : {}\n", .{angle});
         time.sleep(1000000);
@@ -93,9 +92,10 @@ pub fn main() !void {
 
     var timer = try time.Timer.start();
     while (!window.shouldClose()) : (i +%= 1) {
-        win[i] = (1 / (@as(f32, @floatFromInt(timer.lap())) * 0.000000001)) / win_size;
+        const delta_time = @as(f32, @floatFromInt(timer.lap())) * 0.000000001;
+        win[i] = (1 / (delta_time)) / win_size;
         glfw.pollEvents();
-
+        input(&camera, delta_time, window);
         // std.debug.print("angle = {}\n", .{angle});
         // gl.clearColor(1, 0, 1, 1);
         // gl.clear(gl.COLOR_BUFFER_BIT);
@@ -110,7 +110,7 @@ fn GL_init() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    const light: vec.Vec4 = vec.init4(-20, 5, 0, 1);
+    const light: vec.Vec4 = vec.init4(0, 5, 0, 1);
 
     prog = basic.BasicProgram.init();
 
@@ -128,7 +128,7 @@ fn GL_init() !void {
         screen_width / screen_hight,
         1,
         100,
-        vec.init3(1, 1, 3),
+        vec.init3(0, 0, 2),
     );
 
     const lighteye: vec.Vec4 = camera.view_matrix.MulVec(light);
@@ -145,7 +145,7 @@ fn GL_init() !void {
     const basic_seaShell = obj.ObjectFactory.init(seaShell);
 
     seaShell1 = basic_seaShell.make(vec.Vec3.zeros(), vec.Vec3.zeros());
-    seaShell2 = basic_seaShell.make(vec.Vec3.number(1), vec.Vec3.zeros());
+    seaShell2 = basic_seaShell.make(vec.Vec3.zeros(), vec.Vec3.zeros());
 
     // gl.frontFace(gl.CW); // GL_CCW for counter clock-wise
 
@@ -161,8 +161,8 @@ fn GL_Render() void {
     camera.update();
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    seaShell1.updateRoation(vec.Vec3.number(angle * CDR));
-    seaShell2.updateRoation(vec.Vec3.number(-angle * CDR));
+    // seaShell1.updateRoation(vec.Vec3.number());
+    seaShell2.updateRoation(vec.Vec3.number(angle * CDR));
 
     prog.uniforms.draw(camera, seaShell1);
     prog.uniforms.draw(camera, seaShell2);
@@ -172,4 +172,37 @@ fn GL_Render() void {
     // gl.drawElements(gl.TRIANGLES, @as(gl.GLsizei, @intCast(num_triangles)), gl.UNSIGNED_INT, null);
 
     gl.flush();
+}
+
+fn input(came: *cam.Camera, delta_time: f32, window: glfw.Window) void {
+    const speed = 1;
+    const displacement = 10;
+    if (window.getKey(glfw.Key.w) == glfw.Action.press) {
+        camera.eye.vec[0] += delta_time * speed * @cos(came.yaw * CDR);
+        camera.eye.vec[2] += delta_time * speed * @sin(came.yaw * CDR);
+    }
+    // Move backward
+    if (window.getKey(glfw.Key.s) == glfw.Action.press) {
+        camera.eye.vec[0] -= delta_time * speed * @cos(came.yaw * CDR);
+        camera.eye.vec[2] -= delta_time * speed * @sin(came.yaw * CDR);
+    }
+
+    // Strafe left
+    if (window.getKey(glfw.Key.a) == glfw.Action.press) {
+        came.yaw -= delta_time * speed * 50;
+    }
+    // Strafe right
+    if (window.getKey(glfw.Key.d) == glfw.Action.press) {
+        came.yaw += delta_time * speed * 50;
+    }
+
+    if (came.yaw > 180) {
+        came.yaw = -180;
+    }
+    if (came.yaw < -180) {
+        came.yaw = 180;
+    }
+
+    camera.look_at_point.vec[0] = camera.eye.vec[0] + displacement * @cos(came.yaw * CDR);
+    camera.look_at_point.vec[2] = camera.eye.vec[2] + displacement * @sin(came.yaw * CDR);
 }

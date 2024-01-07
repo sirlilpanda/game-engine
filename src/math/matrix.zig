@@ -652,7 +652,6 @@ test "look at" {
         vect.init3(0, 0, 0),
         vect.init3(0, 1, 0),
     );
-    _ = viewMatrix;
 
-    // viewMatrix.debug_print_matrix();
+    viewMatrix.debug_print_matrix();
 }

@@ -1,5 +1,5 @@
 const gl = @import("gl");
-const file = @import("../loadfile.zig");
+const file = @import("../file_loading/loadfile.zig");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
@@ -33,7 +33,7 @@ pub const renderer = struct {
     }
 
     pub fn loadDatFile(self: *Self, allocator: Allocator, filename: []const u8) !void {
-        const dat = try file.ObjectFile.loadDatFile(allocator, filename);
+        const dat = try file.loadDatFile(allocator, filename);
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
         gl.namedBufferData(
             self.vertex_buffer_object,
