@@ -14,6 +14,10 @@ pub const Uniform = struct {
         };
     }
 
+    pub fn addLocation(self: *Self, location: gl.GLint) void {
+        self.location = location;
+    }
+
     pub inline fn sendFloat(self: Self, v0: gl.GLfloat) void {
         gl.uniform1f(self.location, v0);
     }
@@ -110,165 +114,165 @@ pub const Uniform = struct {
         gl.uniform4uiv(self.location, count, @ptrCast(&value[0]));
     }
 
-    pub inline fn sendMatrix2(self: Self, transpose: gl.GLboolean, m: mat.Matrix(2, 2)) void {
+    pub inline fn sendMatrix2(self: Self, transpose: bool, m: mat.Matrix(2, 2)) void {
         gl.uniformMatrix2fv(
             self.location,
             1,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix3(self: Self, transpose: gl.GLboolean, m: mat.Mat3x3) void {
+    pub inline fn sendMatrix3(self: Self, transpose: bool, m: mat.Mat3x3) void {
         gl.uniformMatrix3fv(
             self.location,
             1,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix4(self: Self, transpose: gl.GLboolean, m: mat.Mat4x4) void {
+    pub inline fn sendMatrix4(self: Self, transpose: bool, m: mat.Mat4x4) void {
         gl.uniformMatrix4fv(
             self.location,
             1,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix2x3(self: Self, transpose: gl.GLboolean, m: mat.Matrix(2, 3)) void {
+    pub inline fn sendMatrix2x3(self: Self, transpose: bool, m: mat.Matrix(2, 3)) void {
         gl.uniformMatrix2x3fv(
             self.location,
             1,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix3x2(self: Self, transpose: gl.GLboolean, m: mat.Matrix(3, 2)) void {
+    pub inline fn sendMatrix3x2(self: Self, transpose: bool, m: mat.Matrix(3, 2)) void {
         gl.uniformMatrix3x2fv(
             self.location,
             1,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix2x4(self: Self, transpose: gl.GLboolean, m: mat.Matrix(2, 4)) void {
+    pub inline fn sendMatrix2x4(self: Self, transpose: bool, m: mat.Matrix(2, 4)) void {
         gl.uniformMatrix2x4fv(
             self.location,
             1,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix4x2(self: Self, transpose: gl.GLboolean, m: mat.Matrix(4, 2)) void {
+    pub inline fn sendMatrix4x2(self: Self, transpose: bool, m: mat.Matrix(4, 2)) void {
         gl.uniformMatrix4x2fv(
             self.location,
             1,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix3x4(self: Self, transpose: gl.GLboolean, m: mat.Matrix(3, 4)) void {
+    pub inline fn sendMatrix3x4(self: Self, transpose: bool, m: mat.Matrix(3, 4)) void {
         gl.uniformMatrix3x4fv(
             self.location,
             1,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix4x3(self: Self, transpose: gl.GLboolean, m: mat.Matrix(4, 3)) void {
+    pub inline fn sendMatrix4x3(self: Self, transpose: bool, m: mat.Matrix(4, 3)) void {
         gl.uniformMatrix4x3fv(
             self.location,
             1,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
     /////////////////////////////////////
 
-    pub inline fn sendMatrix2Array(self: Self, count: gl.GLsizei, transpose: gl.GLboolean, m: mat.Matrix(2, 2)) void {
+    pub inline fn sendMatrix2Array(self: Self, count: gl.GLsizei, transpose: bool, m: mat.Matrix(2, 2)) void {
         gl.uniformMatrix2fv(
             self.location,
             count,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix3Array(self: Self, count: gl.GLsizei, transpose: gl.GLboolean, m: mat.Mat3x3) void {
+    pub inline fn sendMatrix3Array(self: Self, count: gl.GLsizei, transpose: bool, m: mat.Mat3x3) void {
         gl.uniformMatrix3fv(
             self.location,
             count,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix4Array(self: Self, count: gl.GLsizei, transpose: gl.GLboolean, m: mat.Mat4x4) void {
+    pub inline fn sendMatrix4Array(self: Self, count: gl.GLsizei, transpose: bool, m: mat.Mat4x4) void {
         gl.uniformMatrix4fv(
             self.location,
             count,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix2x3Array(self: Self, count: gl.GLsizei, transpose: gl.GLboolean, m: mat.Matrix(2, 3)) void {
+    pub inline fn sendMatrix2x3Array(self: Self, count: gl.GLsizei, transpose: bool, m: mat.Matrix(2, 3)) void {
         gl.uniformMatrix2x3fv(
             self.location,
             count,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix3x2Array(self: Self, count: gl.GLsizei, transpose: gl.GLboolean, m: mat.Matrix(3, 2)) void {
+    pub inline fn sendMatrix3x2Array(self: Self, count: gl.GLsizei, transpose: bool, m: mat.Matrix(3, 2)) void {
         gl.uniformMatrix3x2fv(
             self.location,
             count,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix2x4Array(self: Self, count: gl.GLsizei, transpose: gl.GLboolean, m: mat.Matrix(2, 4)) void {
+    pub inline fn sendMatrix2x4Array(self: Self, count: gl.GLsizei, transpose: bool, m: mat.Matrix(2, 4)) void {
         gl.uniformMatrix2x4fv(
             self.location,
             count,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix4x2Array(self: Self, count: gl.GLsizei, transpose: gl.GLboolean, m: mat.Matrix(4, 2)) void {
+    pub inline fn sendMatrix4x2Array(self: Self, count: gl.GLsizei, transpose: bool, m: mat.Matrix(4, 2)) void {
         gl.uniformMatrix4x2fv(
             self.location,
             count,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix3x4Array(self: Self, count: gl.GLsizei, transpose: gl.GLboolean, m: mat.Matrix(3, 4)) void {
+    pub inline fn sendMatrix3x4Array(self: Self, count: gl.GLsizei, transpose: bool, m: mat.Matrix(3, 4)) void {
         gl.uniformMatrix3x4fv(
             self.location,
             count,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }
 
-    pub inline fn sendMatrix4x3Array(self: Self, count: gl.GLsizei, transpose: gl.GLboolean, m: mat.Matrix(4, 3)) void {
+    pub inline fn sendMatrix4x3Array(self: Self, count: gl.GLsizei, transpose: bool, m: mat.Matrix(4, 3)) void {
         gl.uniformMatrix4x3fv(
             self.location,
             count,
-            transpose,
+            if (transpose) gl.TRUE else gl.FALSE,
             @ptrCast(&m.vec[0]),
         );
     }

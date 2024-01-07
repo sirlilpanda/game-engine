@@ -69,6 +69,12 @@ pub const renderer = struct {
         gl.bindVertexArray(self.vertex_array_object);
     }
 
+    pub fn loadObjFile(self: *Self, allocator: Allocator, filename: []const u8) !void {
+        _ = filename;
+        _ = allocator;
+        _ = self;
+    }
+
     pub fn destroy(self: Self) void {
         gl.deleteVertexArrays(1, &self.vertex_array_object);
         gl.deleteBuffers(1, &self.vertex_buffer_object);

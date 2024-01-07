@@ -1,5 +1,6 @@
 const gl = @import("gl");
 const std = @import("std");
+
 const Allocator = std.mem.Allocator;
 
 const std_file_size = 2000;
@@ -38,23 +39,44 @@ pub const ShaderErrors = error{
     failed_to_compile,
 };
 
+pub const ShaderTypes = enum {
+    vertex,
+    frag,
+    compute,
+    geometry,
+    tesslation_control_shader,
+    tesslation_eval_shader,
+};
+
+// TODO add unifroms to the struct
+// idea: dynamiclly add the uniforms as you parse the file
 pub const Shader = struct {
     const Self = @This();
 
     id: gl.GLuint,
 
-    pub fn init(allocator: Allocator, shader_path: []const u8, shader_type: gl.GLuint) !Self {
+    pub fn init(allocator: Allocator, shader_path: []const u8, shader_type: ShaderTypes) !Self {
         const shaderfile: []u8 = try loadfile(allocator, shader_path);
         defer allocator.free(shaderfile);
 
         if (!quiet) std.debug.print("\nfile : {s}\n", .{shaderfile});
 
-        var shader_id = gl.createShader(shader_type);
+        var shader_id = gl.createShader(switch (shader_type) {
+            ShaderTypes.vertex => gl.VERTEX_SHADER,
+            ShaderTypes.frag => gl.FRAGMENT_SHADER,
+            ShaderTypes.compute => gl.COMPUTE_SHADER,
+            ShaderTypes.geometry => gl.GEOMETRY_SHADER,
+            ShaderTypes.tesslation_control_shader => gl.TESS_CONTROL_SHADER,
+            ShaderTypes.tesslation_eval_shader => gl.TESS_EVALUATION_SHADER,
+        });
+
         gl.shaderSource(shader_id, 1, @ptrCast(&shaderfile), null);
         gl.compileShader(shader_id);
         try chech_status(shader_id, allocator);
 
-        return Self{ .id = shader_id };
+        return Self{
+            .id = shader_id,
+        };
     }
 
     fn chech_status(shader_id: gl.GLuint, allocator: Allocator) !void {

@@ -12,24 +12,23 @@ const program = @import("opengl_wrappers/program.zig");
 const render = @import("opengl_wrappers/render.zig");
 const uni = @import("opengl_wrappers/uniform.zig");
 const cam = @import("opengl_wrappers/camera.zig");
+const obj = @import("objects/object.zig");
 
-const log = std.log.scoped(.Engine);
-
-var mvpMatrixUniform: uni.Uniform = undefined;
-var mvMatrixUniform: uni.Uniform = undefined;
-var norMatrixUniform: uni.Uniform = undefined;
-var lgtUniform: uni.Uniform = undefined;
+const basic = @import("basic.zig");
 
 var angle: f32 = 0;
 const CDR: f32 = std.math.pi / 180.0;
 
-var seaShell1: render.renderer = undefined;
-var seaShell2: render.renderer = undefined;
+var seaShell1: obj.Object = undefined;
+var seaShell2: obj.Object = undefined;
+var camera: cam.Camera = undefined;
 
-var viewMatrix: mat.Mat4x4 = undefined;
-var projMatrix: mat.Mat4x4 = undefined;
+// var viewMatrix: mat.Mat4x4 = undefined;
+// var projMatrix: mat.Mat4x4 = undefined;
 var num_triangles: usize = undefined;
 var keep_running = false;
+
+var prog: basic.BasicProgram = undefined;
 
 const screen_hight = 1080;
 const screen_width = 1920;
@@ -113,33 +112,27 @@ fn GL_init() !void {
 
     const light: vec.Vec4 = vec.init4(-20, 5, 0, 1);
 
-    var prog = program.Program.init();
-    try prog.add_vert_n_frag(
-        allocator,
-        "shaders/Seashell.vert",
-        "shaders/Seashell.frag",
-    );
+    prog = basic.BasicProgram.init();
+
+    const vert = try shader.Shader.init(allocator, "shaders/Seashell.vert", .vertex);
+    const frag = try shader.Shader.init(allocator, "shaders/Seashell.frag", .frag);
+
+    prog.load_shader(vert);
+    prog.load_shader(frag);
+
     prog.link();
     prog.use();
 
-    mvMatrixUniform = prog.addUniform("mvMatrix");
-    mvpMatrixUniform = prog.addUniform("mvpMatrix");
-    norMatrixUniform = prog.addUniform("norMatrix");
-    lgtUniform = prog.addUniform("lightPos");
+    camera = cam.Camera.init(
+        40,
+        screen_width / screen_hight,
+        1,
+        100,
+        vec.init3(1, 1, 3),
+    );
 
-    // projMatrix = mat.Mat4x4.perspective(40.0 * CDR, screen_width / screen_hight, 1, 1000);
-    // viewMatrix = mat.Mat4x4.lookAt(
-    //     vec.init3(1, 1, 3),
-    //     vec.init3(0, 0, 0),
-    //     vec.init3(0, 1, 0),
-    // );
-
-    const camera = cam.camera.init(40, screen_width / screen_hight, 1, 100, vec.init3(1, 1, 3));
-    viewMatrix = camera.getViewMatrix();
-    projMatrix = camera.projection_matrix;
-
-    const lighteye: vec.Vec4 = viewMatrix.MulVec(light);
-    lgtUniform.sendVec4(lighteye);
+    const lighteye: vec.Vec4 = camera.view_matrix.MulVec(light);
+    prog.uniforms.lgtUniform.sendVec4(lighteye);
 
     // gl.uniform4fv(lgtLoc, 1, @ptrCast(&lighteye.vec[0]));
 
@@ -147,46 +140,32 @@ fn GL_init() !void {
     gl.enable(gl.DEPTH_TEST); // cull face
     gl.cullFace(gl.BACK); // cull back face
 
-    // try loadSeaShell();
-    seaShell1 = render.renderer.init();
-    seaShell2 = render.renderer.init();
-    try seaShell1.loadDatFile(allocator, "objects/Seashell.dat");
-    try seaShell2.loadDatFile(allocator, "objects/Seashell.dat");
+    var seaShell = render.renderer.init();
+    try seaShell.loadDatFile(allocator, "objects/Seashell.dat");
+    const basic_seaShell = obj.ObjectFactory.init(seaShell);
+
+    seaShell1 = basic_seaShell.make(vec.Vec3.zeros(), vec.Vec3.zeros());
+    seaShell2 = basic_seaShell.make(vec.Vec3.number(1), vec.Vec3.zeros());
 
     // gl.frontFace(gl.CW); // GL_CCW for counter clock-wise
 
 }
 
 fn GL_Render() void {
-    // const ident: mat.Mat4x4 = mat.Mat4x4.idenity();
+    // const ident: mat.Mat4x4 = mat.Mat4x4.idenity()
     // _ = ident;
     // const rotationMatrix = ident.rotate(angle * CDR, vec.init3(0, 0, 1));
     // const invMatrix = mvMatrix.t();
     // const mvMatrix = viewMatrix.mul(rotationMatrix);
+
+    camera.update();
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const mvMatrix = viewMatrix.mul(mat.Mat4x4.rotate_y(angle * CDR));
-    const mvpMatrix = mvMatrix.mul(projMatrix);
-    const invMatrix = mvMatrix.inverseTranspose();
+    seaShell1.updateRoation(vec.Vec3.number(angle * CDR));
+    seaShell2.updateRoation(vec.Vec3.number(-angle * CDR));
 
-    mvMatrixUniform.sendMatrix4(gl.FALSE, mvMatrix);
-    mvpMatrixUniform.sendMatrix4(gl.FALSE, mvpMatrix);
-    norMatrixUniform.sendMatrix4(gl.FALSE, invMatrix);
-
-    seaShell1.render();
-    // mvMatrix.debug_print_matrix();
-
-    const mvMatrix1 = viewMatrix.mul(mat.Mat4x4.rotate_y(angle * CDR))
-        .mul(mat.Mat4x4.translate(vec.init3(0, 0, 0)));
-
-    const mvpMatrix1 = mvMatrix1.mul(projMatrix);
-    const invMatrix1 = mvMatrix1.inverseTranspose();
-
-    mvMatrixUniform.sendMatrix4(gl.FALSE, mvMatrix1);
-    mvpMatrixUniform.sendMatrix4(gl.FALSE, mvpMatrix1);
-    norMatrixUniform.sendMatrix4(gl.FALSE, invMatrix1);
-
-    seaShell2.render();
+    prog.uniforms.draw(camera, seaShell1);
+    prog.uniforms.draw(camera, seaShell2);
 
     // gl.clear();
     // gl.bindVertexArray(VAO);

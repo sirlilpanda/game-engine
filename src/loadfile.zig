@@ -71,6 +71,17 @@ pub const ObjectFile = struct {
         return data;
     }
 
+    pub fn loadObjFile(self: *Self, allocator: Allocator, filename: []const u8) !void {
+        _ = self;
+        const obj_file: std.fs.File = try std.fs.cwd().openFile(filename, .{});
+        const file_end = try obj_file.getEndPos();
+        const data = allocator.alloc(u8, @as(usize, file_end));
+        defer allocator.free(data);
+        try obj_file.readAll(data);
+
+        std.debug.print("data : {s}", .{data});
+    }
+
     pub fn change_ori(self: Self, x: f32, y: f32, z: f32) void {
         var i: usize = 0;
         while (i < self.verts.len) : (i += 3) {
@@ -114,12 +125,12 @@ test "load_obj_file" {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    const d = try ObjectFile.loadDatFile(allocator, "objects/Seashell.dat");
+    const d = try ObjectFile.loadObjFile(allocator, "objects/Seashell.dat");
 
-    std.debug.print("\nverts {}: \n", .{d.elements.len});
-    for (d.elements) |v| {
-        std.debug.print("{}\n", .{v});
-    }
+    // std.debug.print("\nverts {}: \n", .{d.elements.len});
+    // for (d.elements) |v| {
+    //     std.debug.print("{}\n", .{v});
+    // }
 
     d.unload();
 }
