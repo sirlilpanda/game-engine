@@ -80,6 +80,14 @@ pub const ObjectFile = struct {
         try obj_file.readAll(data);
 
         std.debug.print("data : {s}", .{data});
+
+        return ObjectFile{
+            .verts = undefined,
+            .normals = undefined,
+            .elements = undefined,
+            .texture = undefined,
+            .allocator = allocator,
+        };
     }
 
     pub fn change_ori(self: Self, x: f32, y: f32, z: f32) void {
@@ -125,7 +133,7 @@ test "load_obj_file" {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    const d = try ObjectFile.loadObjFile(allocator, "objects/Seashell.dat");
+    const d = try ObjectFile.loadObjFile(allocator, "objects/cube.obj");
 
     // std.debug.print("\nverts {}: \n", .{d.elements.len});
     // for (d.elements) |v| {

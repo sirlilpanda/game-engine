@@ -6,14 +6,14 @@ const Allocator = std.mem.Allocator;
 const std_file_size = 2000;
 
 pub fn loadfile(allocator: Allocator, filename: []const u8) ![]u8 {
-    const buffer = try allocator.alloc(u8, std_file_size);
-    defer allocator.free(buffer);
-    const f_slice = try std.fs.cwd().readFile(filename, buffer);
-    const file_len = f_slice.len;
-    const file = try allocator.alloc(u8, file_len + 1);
-    std.mem.copy(u8, file, buffer[0..file_len]);
-    file[file_len] = 0;
-    return file;
+    const shader_file: std.fs.File = try std.fs.cwd().openFile(filename, .{});
+    const file_end = try shader_file.getEndPos();
+    const data = try allocator.alloc(u8, @as(usize, file_end + 1));
+    const data_read = try shader_file.readAll(data);
+    std.debug.print("read : {}\n", .{data_read});
+    std.debug.print("len : {}\n", .{data.len});
+    data[file_end] = 0;
+    return data;
 }
 
 pub fn createShaderProgram(vertex_shader_path: []const u8, fragment_shader_path: []const u8) !gl.GLuint {
