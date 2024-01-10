@@ -20,11 +20,12 @@ pub const BasicUniforms = struct {
 
         const mvMatrix = camera.view_matrix.mul(model);
         const mvpMatrix = camera.projection_matrix.mul(mvMatrix);
-        const invMatrix = mvMatrix.inverseTranspose().t();
-
+        // const invMatrix = mvMatrix.inverseTranspose();
+        const invMatrix = mvMatrix.inverseTranspose();
+        //could queue in another thread to speed up times
         self.mvMatrixUniform.sendMatrix4(false, mvMatrix);
         self.mvpMatrixUniform.sendMatrix4(false, mvpMatrix);
-        self.norMatrixUniform.sendMatrix4(true, invMatrix);
+        self.norMatrixUniform.sendMatrix4(false, invMatrix);
         object.draw();
     }
 };

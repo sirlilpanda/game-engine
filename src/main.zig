@@ -49,13 +49,16 @@ var i: u8 = 0;
 
 fn spin() void {
     while (!keep_running) {
-        // std.debug.print("{d:.2}, {d:.2}, pos : {}, lookat : {}, yaw : {}\r", .{
-        //     @reduce(.Add, win),
-        //     angle,
-        //     camera.eye,
-        //     camera.look_at_point,
-        //     camera.yaw,
-        // });
+        std.debug.print("fps : {d:.2}, angle : {d:.2}, pos : x:{d:.3}, y:{d:.3}, z:{d:.3}, lookat : x:{d:.3}, y:{d:.3}, z:{d:.3}\n", .{
+            @reduce(.Add, win),
+            angle,
+            camera.eye.vec[0],
+            camera.eye.vec[1],
+            camera.eye.vec[2],
+            camera.look_at_point.vec[0],
+            camera.look_at_point.vec[1],
+            camera.look_at_point.vec[2],
+        });
         angle += 0.5;
         // std.debug.print("angle : {}\n", .{angle});
         time.sleep(1000000);
@@ -80,6 +83,8 @@ pub fn main() !void {
         std.process.exit(1);
     };
     defer window.destroy();
+    window.setInputModeCursor(.disabled);
+    defer window.setInputModeCursor(.normal);
 
     glfw.makeContextCurrent(window);
 
@@ -133,8 +138,8 @@ fn GL_init(allocator: Allocator) !void {
         40,
         1,
         1,
-        10,
-        vec.init3(0, 0, 2),
+        10000,
+        vec.init3(0, 0, 0),
     );
 
     const lighteye: vec.Vec4 = camera.view_matrix.MulVec(light);
@@ -142,7 +147,7 @@ fn GL_init(allocator: Allocator) !void {
 
     // gl.uniform4fv(lgtLoc, 1, @ptrCast(&lighteye.vec[0]));
 
-    gl.clearColor(1, 1, 1, 1);
+    gl.clearColor(0, 0, 0, 1);
     gl.enable(gl.DEPTH_TEST); // cull face
     gl.cullFace(gl.BACK); // cull back face
 
@@ -153,8 +158,10 @@ fn GL_init(allocator: Allocator) !void {
 
     for (seaShells, 0..) |s, index| {
         _ = s;
+        const normed = (@as(f32, @floatFromInt(index))) / 32.0 * 2.0 * std.math.pi;
+
         seaShells[index] = basic_seaShell.make(
-            vec.init3(rad * @sin(@as(f32, @floatFromInt(index))) + 2, 0, rad * @cos(@as(f32, @floatFromInt(index)))),
+            vec.init3(rad * @sin(normed), 0, rad * @cos(normed)),
             vec.Vec3.zeros(),
         );
         // std.debug.print("v : {}\n", .{seaShells[index].pos});
@@ -192,14 +199,32 @@ fn GL_Render() void {
     gl.flush();
 }
 
+fn clip(min_val: f32, max_val: f32, val: f32) f32 {
+    if (val >= min_val) return min_val;
+    if (val <= max_val) return max_val;
+    return val;
+}
+
+var last = vec.init2(0, 0);
+
 fn input(came: *cam.Camera, delta_time: f32, window: glfw.Window) !void {
     const speed = 2;
     const radius = 10;
+    _ = radius;
+    const sense = 100;
+    const mouse_delta = window.getCursorPos();
+    const mouse_vec = vec.init2(@floatCast(mouse_delta.xpos), @floatCast(mouse_delta.ypos));
+    const delta = mouse_vec.vec - last.vec;
+    last = mouse_vec;
+
+    came.yaw -= delta[0] * delta_time * sense;
+    came.pitch -= (delta[1] * delta_time * sense);
+    came.pitch = clip(89, -89, came.pitch);
 
     if (window.getKey(glfw.Key.w) == glfw.Action.press) {
         // camera.eye.vec[0] += delta_time * speed;
-        camera.eye.vec[0] += delta_time * speed * @sin(came.yaw * CDR);
-        camera.eye.vec[2] += delta_time * speed * @cos(came.yaw * CDR);
+        camera.eye.vec[0] += delta_time * speed * @sin(came.yaw * CDR); //fowards
+        camera.eye.vec[2] += delta_time * speed * @cos(came.yaw * CDR); //right
     }
     // Move backward
     if (window.getKey(glfw.Key.s) == glfw.Action.press) {
@@ -208,29 +233,16 @@ fn input(came: *cam.Camera, delta_time: f32, window: glfw.Window) !void {
         camera.eye.vec[2] -= delta_time * speed * @cos(came.yaw * CDR);
     }
 
-    if (window.getKey(glfw.Key.z) == glfw.Action.press) {
+    if (window.getKey(glfw.Key.a) == glfw.Action.press) {
         // camera.eye.vec[0] += delta_time * speed;
-        camera.eye.vec[2] += delta_time * speed * @sin(came.yaw * CDR);
-        camera.eye.vec[0] += delta_time * speed * @cos(came.yaw * CDR);
+        camera.eye.vec[2] -= delta_time * speed * @cos((came.yaw - 90) * CDR);
+        camera.eye.vec[0] -= delta_time * speed * @sin((came.yaw - 90) * CDR);
     }
     // Move backward
-    if (window.getKey(glfw.Key.x) == glfw.Action.press) {
-        // camera.eye.vec[0] -= delta_time * speed;
-        camera.eye.vec[2] -= delta_time * speed * @sin(came.yaw * CDR);
-        camera.eye.vec[0] -= delta_time * speed * @cos(came.yaw * CDR);
-    }
-
-    // Strafe left
-    if (window.getKey(glfw.Key.a) == glfw.Action.press) {
-        // camera.eye.vec[2] += delta_time * speed;
-
-        came.yaw += delta_time * speed * 50;
-    }
-    // Strafe right
     if (window.getKey(glfw.Key.d) == glfw.Action.press) {
-        // camera.eye.vec[2] -= delta_time * speed;
-
-        came.yaw -= delta_time * speed * 50;
+        // camera.eye.vec[0] -= delta_time * speed;
+        camera.eye.vec[2] += delta_time * speed * @cos((came.yaw - 90) * CDR);
+        camera.eye.vec[0] += delta_time * speed * @sin((came.yaw - 90) * CDR);
     }
 
     // Strafe right
@@ -248,6 +260,8 @@ fn input(came: *cam.Camera, delta_time: f32, window: glfw.Window) !void {
 
     // came.look_at_point = vec.Vec3.number(1);
 
-    camera.look_at_point.vec[0] = camera.eye.vec[0] + (radius * @sin(came.yaw * CDR));
-    camera.look_at_point.vec[2] = camera.eye.vec[2] + (radius * @cos(came.yaw * CDR));
+    camera.look_at_point.vec[0] = camera.eye.vec[0] + (@sin(came.yaw * CDR));
+    camera.look_at_point.vec[1] = camera.eye.vec[1] + (@tan(came.pitch * CDR));
+    // camera.look_at_point.vec[1] = camera.eye.vec[1];
+    camera.look_at_point.vec[2] = camera.eye.vec[2] + (@cos(came.yaw * CDR));
 }
