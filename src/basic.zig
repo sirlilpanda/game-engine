@@ -3,8 +3,9 @@ const uni = @import("opengl_wrappers/uniform.zig");
 const obj = @import("objects/object.zig");
 const cam = @import("opengl_wrappers/camera.zig");
 const mat = @import("math/matrix.zig");
+const vec = @import("math/vec.zig");
+const std = @import("std");
 
-//all the types in here must be uni forms
 pub const BasicUniforms = struct {
     const Self = @This();
     mvMatrixUniform: uni.Uniform = uni.Uniform.init("mvMatrix"),
@@ -14,18 +15,16 @@ pub const BasicUniforms = struct {
 
     pub fn draw(self: Self, camera: cam.Camera, object: obj.Object) void {
         // i dont know if this is faster
-        const mvMatrix = camera.view_matrix
-            .mul(mat.Mat4x4.rotate_x(object.roation.vec[0]))
-            .mul(mat.Mat4x4.rotate_y(object.roation.vec[1]))
-            .mul(mat.Mat4x4.rotate_z(object.roation.vec[2]))
-            .mul(mat.Mat4x4.translate(object.pos));
+        var model = mat.Mat4x4.idenity();
+        model = model.mul(mat.Mat4x4.translate(object.pos)).mul(mat.Mat4x4.rotate(object.roation.vec[0], vec.init3(1, 0, 0)));
 
-        const mvpMatrix = mvMatrix.mul(camera.projection_matrix);
-        const invMatrix = mvMatrix.inverseTranspose();
+        const mvMatrix = camera.view_matrix.mul(model);
+        const mvpMatrix = camera.projection_matrix.mul(mvMatrix);
+        const invMatrix = mvMatrix.inverseTranspose().t();
 
         self.mvMatrixUniform.sendMatrix4(false, mvMatrix);
         self.mvpMatrixUniform.sendMatrix4(false, mvpMatrix);
-        self.norMatrixUniform.sendMatrix4(false, invMatrix);
+        self.norMatrixUniform.sendMatrix4(true, invMatrix);
         object.draw();
     }
 };

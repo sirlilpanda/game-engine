@@ -6,6 +6,11 @@ const program = @import("program.zig");
 
 const CDR: f32 = std.math.pi / 180.0;
 
+const default_look_at = vec.Vec3.number(1);
+const default_up = vec.init3(0, 1, 0);
+
+// inline fn clip()
+
 pub const Camera = struct {
     const Self = @This();
     pitch: f32,
@@ -29,8 +34,8 @@ pub const Camera = struct {
             .znear = znear,
             .zfar = zfar,
             .eye = eye,
-            .look_at_point = vec.Vec3.zeros(),
-            .up = vec.init3(0, 1, 0),
+            .look_at_point = default_look_at,
+            .up = default_up,
             .projection_matrix = mat.Mat4x4.perspective(
                 fov * CDR,
                 aspect,
@@ -39,8 +44,8 @@ pub const Camera = struct {
             ),
             .view_matrix = mat.Mat4x4.lookAt(
                 eye,
-                vec.Vec3.zeros(),
-                vec.init3(0, 1, 0),
+                vec.Vec3.number(1),
+                default_up,
             ),
         };
     }
@@ -52,4 +57,10 @@ pub const Camera = struct {
             self.up,
         );
     }
+
+    // pub fn perspective_update(self : *Self) void {
+    //     self.yaw =
+
+    // }
+
 };

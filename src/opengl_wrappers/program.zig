@@ -14,7 +14,7 @@ pub fn Program(comptime unifrom_type: type) type {
         const Self = @This();
 
         program_id: gl.GLuint,
-        shaders: [AMOUNT_OF_SHADERS]shader.Shader, //does this really need to be dynamic
+        shaders: [AMOUNT_OF_SHADERS]?shader.Shader, //does this really need to be dynamic
         shader_index: u8,
         uniforms: unifrom_type,
         camera: cam.Camera,
@@ -22,7 +22,7 @@ pub fn Program(comptime unifrom_type: type) type {
         pub fn init() Self {
             return Self{
                 .program_id = gl.createProgram(),
-                .shaders = undefined,
+                .shaders = [_]?shader.Shader{null} ** AMOUNT_OF_SHADERS,
                 .shader_index = 0,
                 .uniforms = undefined,
                 .camera = undefined,
@@ -59,8 +59,8 @@ pub fn Program(comptime unifrom_type: type) type {
         pub fn load_shader(self: *Self, s: shader.Shader) void {
             self.shaders[self.shader_index] = s;
             self.shader_index += 1;
-            std.debug.print("shaders : {}\n", .{s});
-            std.debug.print("index : {}\n", .{self.shader_index});
+            // std.debug.print("shaders : {}\n", .{s});
+            // std.debug.print("index : {}\n", .{self.shader_index});
             gl.attachShader(self.program_id, s.id);
         }
 
@@ -74,6 +74,20 @@ pub fn Program(comptime unifrom_type: type) type {
             self.linkUniforms();
         }
 
+        pub fn reload(self: Self) !Self {
+            var prog = init();
+            for (self.shaders) |s| {
+                if (s) |sha| {
+                    const shad = try sha.reload();
+                    prog.load_shader(shad);
+                }
+            }
+            self.unload();
+            prog.link();
+            prog.use();
+            return prog;
+        }
+
         // this was done so i can swap programs
         pub fn use(self: Self) void {
             gl.useProgram(self.program_id);
@@ -81,7 +95,7 @@ pub fn Program(comptime unifrom_type: type) type {
 
         pub fn unload(self: Self) void {
             for (self.shaders) |s| {
-                s.unload();
+                if (s) |sha| sha.unload();
             }
             gl.deleteProgram(self.program_id);
         }

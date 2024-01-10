@@ -16,7 +16,7 @@ pub fn build(b: *std.build.Builder) !void {
     // Add your executable and configure with
     // target and optimize, specify your root file (ex. main.zig)
     const exe = b.addExecutable(.{
-        .name = "mach-glfw-opengl-example",
+        .name = "game_fool",
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,

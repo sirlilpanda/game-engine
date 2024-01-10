@@ -26,8 +26,8 @@ void main()
 	float diffTerm = max(dot(lgtVec, normalEye), 0);
 	vec4 diffuse = material * diffTerm;
 	float specTerm = max(dot(halfVec, normalEye), 0);
-	// vec4 specular = white * pow(specTerm, shininess);
+	vec4 specular = white * pow(specTerm, shininess);
 	
 	gl_Position = mvpMatrix * position;
-	oColor = ambient + diffuse;     
+	oColor = ambient + diffuse + specular;     
 }

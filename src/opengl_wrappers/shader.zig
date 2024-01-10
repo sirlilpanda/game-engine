@@ -10,8 +10,9 @@ pub fn loadfile(allocator: Allocator, filename: []const u8) ![]u8 {
     const file_end = try shader_file.getEndPos();
     const data = try allocator.alloc(u8, @as(usize, file_end + 1));
     const data_read = try shader_file.readAll(data);
-    std.debug.print("read : {}\n", .{data_read});
-    std.debug.print("len : {}\n", .{data.len});
+    _ = data_read;
+    // std.debug.print("read : {}\n", .{data_read});
+    // std.debug.print("len : {}\n", .{data.len});
     data[file_end] = 0;
     return data;
 }
@@ -33,7 +34,7 @@ pub fn createShaderProgram(vertex_shader_path: []const u8, fragment_shader_path:
     return program;
 }
 
-const quiet: bool = false;
+const quiet: bool = true;
 
 pub const ShaderErrors = error{
     failed_to_compile,
@@ -52,7 +53,9 @@ pub const ShaderTypes = enum {
 // idea: dynamiclly add the uniforms as you parse the file
 pub const Shader = struct {
     const Self = @This();
-
+    shader_path: []const u8,
+    allocator: Allocator,
+    shader_type: ShaderTypes,
     id: gl.GLuint,
 
     pub fn init(allocator: Allocator, shader_path: []const u8, shader_type: ShaderTypes) !Self {
@@ -76,6 +79,9 @@ pub const Shader = struct {
 
         return Self{
             .id = shader_id,
+            .shader_path = shader_path,
+            .allocator = allocator,
+            .shader_type = shader_type,
         };
     }
 
@@ -91,6 +97,10 @@ pub const Shader = struct {
             std.debug.print("[ERROR] : {s}\n", .{error_string});
             return ShaderErrors.failed_to_compile;
         }
+    }
+
+    pub fn reload(self: Self) !Self {
+        return try init(self.allocator, self.shader_path, self.shader_type);
     }
 
     pub fn unload(self: Self) void {

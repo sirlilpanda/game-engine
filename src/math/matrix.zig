@@ -1,5 +1,5 @@
 //
-//   0 1 2 3 .. n
+//   0 0 2 3 .. n
 // 0 a b c d
 // 1 e f g h
 // 2 i j k l
@@ -178,8 +178,8 @@ pub const Mat4x4 = struct {
             8,  9,  10, 11,
             12, 13, 14, 15,
         };
-        const v1 = @shuffle(f32, mat.vec, undefined, mask1);
-        const v2 = @shuffle(f32, mat2.vec, undefined, mask2);
+        const v1 = @shuffle(f32, mat2.vec, undefined, mask1);
+        const v2 = @shuffle(f32, mat.vec, undefined, mask2);
         const v3 = v1 * v2; // all the dot products multiplaction steps
 
         const mask3 = @Vector(16, i32){ 0, 1, 2, 3, 16, 17, 18, 19, 32, 33, 34, 35, 48, 49, 50, 51 };
@@ -214,23 +214,28 @@ pub const Mat4x4 = struct {
         const temp3 = @reduce(.Add, @shuffle(f32, v2, undefined, mask5));
         const temp4 = @reduce(.Add, @shuffle(f32, v2, undefined, mask6));
 
-        return vect.init4(temp1, temp2, temp3, temp4);
+        return vect.init4(
+            temp1,
+            temp2,
+            temp3,
+            temp4,
+        );
     }
 
-    pub fn lookAt(eye: vect.Vec3, center: vect.Vec3, up: vect.Vec3) Self {
-        const f: vect.Vec3 = (vect.Vec3{ .vec = center.vec - eye.vec }).norm();
-        const s: vect.Vec3 = vect.cross(f, up).norm();
-        const u: vect.Vec3 = vect.cross(s, f).norm();
+    pub fn lookAt(eye: vect.Vec3, center: vect.Vec3, approx_up: vect.Vec3) Self {
+        const forward: vect.Vec3 = (vect.Vec3{ .vec = center.vec - eye.vec }).norm();
+        const side: vect.Vec3 = vect.cross(forward, approx_up).norm();
+        const up: vect.Vec3 = vect.cross(side, forward).norm();
 
         // std.debug.print("\nf : {}\n", .{f});
         // std.debug.print("s : {}\n", .{s});
         // std.debug.print("u : {}\n", .{u});
 
         const v = @Vector(16, f32){
-            s.vec[0],    u.vec[0],    -f.vec[0],  0,
-            s.vec[1],    u.vec[1],    -f.vec[1],  0,
-            s.vec[2],    u.vec[2],    -f.vec[2],  0,
-            -s.dot(eye), -u.dot(eye), f.dot(eye), 1.0,
+            side.vec[0],    up.vec[0],    -forward.vec[0],  0,
+            side.vec[1],    up.vec[1],    -forward.vec[1],  0,
+            side.vec[2],    up.vec[2],    -forward.vec[2],  0,
+            -side.dot(eye), -up.dot(eye), forward.dot(eye), 1.0,
         };
         return Mat4x4{ .vec = v };
     }
@@ -240,10 +245,10 @@ pub const Mat4x4 = struct {
         //https://github.com/g-truc/glm/blob/0.9.5/glm/gtc/matrix_transform.inl#L208
         const half_tan_fovy = @tan(fovy / 2);
         const v = @Vector(16, f32){
-            1 / (aspect * half_tan_fovy), 0,                 0,                                0,
-            0,                            1 / half_tan_fovy, 0,                                0,
-            0,                            0,                 -(zFar + zNear) / (zFar - zNear), -(2 * zFar * zNear) / (zFar - zNear),
-            0,                            0,                 1,                                0,
+            1 / (aspect * half_tan_fovy), 0,                 0,                                    0,
+            0,                            1 / half_tan_fovy, 0,                                    0,
+            0,                            0,                 -(zFar + zNear) / (zFar - zNear),     -1,
+            0,                            0,                 -(2 * zFar * zNear) / (zFar - zNear), 0,
         };
         return Mat4x4{ .vec = v };
     }
@@ -305,10 +310,10 @@ pub const Mat4x4 = struct {
 
     pub fn translate(location: vect.Vec3) Self {
         const translation_matrix = @Vector(16, f32){
-            1, 0, 0, location.vec[0],
-            0, 1, 0, location.vec[1],
-            0, 0, 1, location.vec[2],
-            0, 0, 0, 1,
+            1,               0,               0,               0,
+            0,               1,               0,               0,
+            0,               0,               1,               0,
+            location.vec[0], location.vec[1], location.vec[2], 1,
         };
         return Mat4x4{ .vec = translation_matrix };
     }
@@ -485,7 +490,6 @@ pub fn Matrix(comptime hight: comptime_int, comptime length: comptime_int) type 
                         r += mat.vec[i * n + k] * mat2.vec[k * n + j];
                     }
                     k = 0;
-                    // temp.vec[i + j * n] = mat.vec[i + j * n];
                     temp.vec[i * n + j] = r;
                 }
                 i = 0;
@@ -551,32 +555,39 @@ test "mat4x4 mul" {
         12, 13, 14, 15,
     };
 
+    const test_data2: [16]f32 = [16]f32{
+        12, 13, 14, 15,
+        8,  9,  10, 11,
+        4,  5,  6,  7,
+        0,  1,  2,  3,
+    };
+
     const matGenr: matrix4x4 = matrix4x4.fromArray(test_data);
+    const matGenr2: matrix4x4 = matrix4x4.fromArray(test_data2);
     const matOpti: Mat4x4 = Mat4x4.makeFromArray(test_data);
+    const matOpti2: Mat4x4 = Mat4x4.makeFromArray(test_data2);
 
     std.debug.print("\n", .{});
 
     var timer = try time.Timer.start();
     var i: u32 = 0;
     while (i < 2000) : (i += 1) {
-        _ = matOpti.mul(matOpti);
+        _ = matOpti.mul(matOpti2);
     }
     std.debug.print("matOpti took {}ns\n", .{timer.lap()});
     i = 0;
 
     _ = timer.lap();
     while (i < 2000) : (i += 1) {
-        _ = matGenr.mul(matrix4x4, matGenr);
+        _ = matGenr.mul(matrix4x4, matGenr2);
     }
     std.debug.print("matGenr took {}ns\n", .{timer.lap()});
 
-    const matOptiOut = matOpti.mul(matOpti);
-    _ = matOptiOut;
-    const matGenrOut = matGenr.mul(matrix4x4, matGenr);
-    _ = matGenrOut;
+    const matOptiOut = matOpti.mul(matOpti2);
+    const matGenrOut = matGenr.mul(matrix4x4, matGenr2);
 
-    // matOptiOut.debug_print_matrix();
-    // matGenrOut.debug_print_matrix();
+    matOptiOut.debug_print_matrix();
+    matGenrOut.debug_print_matrix();
 }
 
 test "mat3x3 vec mul" {
@@ -618,6 +629,7 @@ test "mat4x4 vec mul" {
 
 test "rotaion mat" {
     const math = @import("std").math;
+    _ = math;
     const test_data: [16]f32 = [16]f32{
         0,  1,  2,  3,
         4,  5,  6,  7,
@@ -627,7 +639,8 @@ test "rotaion mat" {
     const id: Mat4x4 = Mat4x4.idenity();
     _ = id;
     const matOpti: Mat4x4 = Mat4x4.makeFromArray(test_data);
-    _ = matOpti.rotate(46.0 * math.pi / 180.0, vect.init3(1, 1, 1));
+    _ = matOpti;
+    // _ = matOpti.rotate(46.0 * math.pi / 180.0, vect.init3(1, 1, 1));
 }
 
 test "inverse" {
