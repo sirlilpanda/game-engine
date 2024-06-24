@@ -47,6 +47,38 @@ pub fn Vec(comptime length: comptime_int) type {
         const Self = @This();
         vec: @Vector(length, f32),
 
+        pub inline fn x(self: Self) f32 {
+            return self.vec[0];
+        }
+
+        pub inline fn y(self: Self) f32 {
+            return self.vec[1];
+        }
+
+        pub inline fn z(self: Self) f32 {
+            return self.vec[2];
+        }
+
+        pub inline fn w(self: Self) f32 {
+            return self.vec[3];
+        }
+
+        pub inline fn set_x(self: *Self, val: f32) void {
+            self.vec[0] = val;
+        }
+
+        pub inline fn set_y(self: *Self, val: f32) void {
+            self.vec[1] = val;
+        }
+
+        pub inline fn set_z(self: *Self, val: f32) void {
+            self.vec[2] = val;
+        }
+
+        pub inline fn set_w(self: *Self, val: f32) void {
+            self.vec[3] = val;
+        }
+
         //tested
         pub fn zeros() Self {
             return comptime number(0);
