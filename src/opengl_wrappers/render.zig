@@ -1,6 +1,7 @@
 const gl = @import("gl");
 const file = @import("../file_loading/loadfile.zig");
 const std = @import("std");
+
 const Allocator = std.mem.Allocator;
 
 pub const renderer = struct {
@@ -8,6 +9,7 @@ pub const renderer = struct {
     vertex_array_object: gl.GLuint,
     vertex_buffer_object: gl.GLuint,
     vertex_normal_object: gl.GLuint, //might remove later
+    vertex_texture_object: gl.GLuint,
     vertex_index_object: gl.GLuint,
     number_elements: usize,
 
@@ -16,6 +18,7 @@ pub const renderer = struct {
             .vertex_array_object = undefined,
             .vertex_buffer_object = undefined,
             .vertex_normal_object = undefined, //might remove later
+            .vertex_texture_object = undefined,
             .vertex_index_object = undefined,
             .number_elements = undefined,
         };
@@ -24,16 +27,18 @@ pub const renderer = struct {
         gl.genBuffers(1, &self.vertex_buffer_object);
         gl.genBuffers(1, &self.vertex_normal_object);
         gl.genBuffers(1, &self.vertex_index_object);
+        gl.genBuffers(1, &self.vertex_texture_object);
+
         gl.bindVertexArray(self.vertex_array_object);
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_normal_object);
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_index_object);
+        gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_texture_object);
 
         return self;
     }
 
-    pub fn loadDatFile(self: *Self, allocator: Allocator, filename: []const u8) !void {
-        const dat = try file.loadDatFile(allocator, filename);
+    pub fn loadFile(self: *Self, dat: file.ObjectFile) !void {
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
         gl.namedBufferData(
             self.vertex_buffer_object,
@@ -54,6 +59,19 @@ pub const renderer = struct {
         gl.enableVertexArrayAttrib(self.vertex_array_object, 1);
         gl.vertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 0, null);
 
+        gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_texture_object);
+        gl.namedBufferData(
+            self.vertex_texture_object,
+            @as(isize, @intCast(dat.texture.len * @sizeOf(f32))),
+            @ptrCast(&dat.texture[0]),
+            gl.STATIC_DRAW,
+        );
+
+        gl.enableVertexArrayAttrib(self.vertex_array_object, 2);
+        gl.vertexAttribPointer(2, 2, gl.FLOAT, gl.FALSE, 0, null);
+
+        // std.debug.print("text : {any}\n", .{dat.texture.len / 2});
+        // std.debug.print("vert : {any}\n", .{dat.verts.len / 3});
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.vertex_index_object);
         gl.namedBufferData(
             self.vertex_index_object,
@@ -67,12 +85,6 @@ pub const renderer = struct {
         dat.unload();
 
         gl.bindVertexArray(self.vertex_array_object);
-    }
-
-    pub fn loadObjFile(self: *Self, allocator: Allocator, filename: []const u8) !void {
-        _ = filename;
-        _ = allocator;
-        _ = self;
     }
 
     pub fn destroy(self: Self) void {
