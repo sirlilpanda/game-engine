@@ -22,7 +22,7 @@ pub fn Program(comptime unifrom_type: type) type {
         pub fn init() Self {
             return Self{
                 .program_id = gl.createProgram(),
-                .shaders = [_]?shader.Shader{null} ** AMOUNT_OF_SHADERS,
+                .shaders = [_]?shader.Shader{null} ** AMOUNT_OF_SHADERS, 
                 .shader_index = 0,
                 .uniforms = undefined,
                 .camera = undefined,
@@ -74,20 +74,28 @@ pub fn Program(comptime unifrom_type: type) type {
             self.linkUniforms();
         }
 
-        pub fn reload(self: Self) !Self {
+        pub fn reload(self: *Self) !void {
             var prog = init();
             for (self.shaders) |s| {
                 if (s) |sha| {
-                    const shad = try sha.reload();
-                    prog.load_shader(shad);
+                    const shad = sha.reload();
+                    if (shad == shader.ShaderErrors.failed_to_compile) {
+                        prog.unload();
+                        return shader.ShaderErrors.failed_to_compile;
+                    }
+                    prog.load_shader(try shad);
                 }
             }
             self.unload();
             prog.link();
             prog.use();
-            return prog;
+            // // i think i could just mem copy this
+            self.program_id = prog.program_id;
+            self.shaders = prog.shaders;
+            self.shader_index = prog.shader_index;
+            self.uniforms = prog.uniforms;
+            self.camera = prog.camera;        
         }
-
         // this was done so i can swap programs
         pub fn use(self: Self) void {
             gl.useProgram(self.program_id);
