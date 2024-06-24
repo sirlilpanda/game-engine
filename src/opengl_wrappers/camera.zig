@@ -50,7 +50,27 @@ pub const Camera = struct {
         };
     }
 
-    pub fn update(self: *Self) void {
+    inline fn clip(min_val: f32, max_val: f32, val: f32) f32 {
+        if (val <= min_val) return min_val;
+        if (val >= max_val) return max_val;
+        return val;
+    }
+
+    pub fn updateFps(self: *Self, direction: vec.Vec3) void {
+        //  the direction is the desired direction of travel of the eye relitve to the eye and look at point
+        //  so the x compoent of direction is how far you want to move forward/back
+        //  y : up/down
+        //  z : right/left
+        self.pitch = clip(-89.99, 89.99, self.pitch);
+
+        self.eye.vec[0] += direction.vec[0] * @sin(self.yaw * CDR) - direction.vec[2] * @cos(self.yaw * CDR);
+        self.eye.vec[1] += direction.vec[1];
+        self.eye.vec[2] += direction.vec[0] * @cos(self.yaw * CDR) + direction.vec[2] * @sin(self.yaw * CDR);
+
+        self.look_at_point.vec[0] = self.eye.vec[0] + (@sin(self.yaw * CDR));
+        self.look_at_point.vec[1] = self.eye.vec[1] + (@tan(self.pitch * CDR)) + direction.vec[1];
+        self.look_at_point.vec[2] = self.eye.vec[2] + (@cos(self.yaw * CDR));
+
         self.view_matrix = mat.Mat4x4.lookAt(
             self.eye,
             self.look_at_point,
