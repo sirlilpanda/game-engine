@@ -16,7 +16,7 @@ pub fn loadDatFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
         .verts = try allocator.alloc(f32, num_verts * 3),
         .normals = try allocator.alloc(f32, num_verts * 3),
         .elements = try allocator.alloc(u32, num_triangle * 3),
-        .texture = undefined,
+        .texture = try allocator.alloc(f32, 1), // this is just so it doesnt blow up
         .allocator = allocator,
     };
 
