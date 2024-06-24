@@ -1,5 +1,5 @@
 .{
-    .name = "MachGLFW+OpenGLExample",
+    .name = "game-engine",
     .version = "0.1.0",
     .dependencies = .{
         .mach_glfw = .{
