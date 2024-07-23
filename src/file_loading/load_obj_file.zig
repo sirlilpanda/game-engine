@@ -8,6 +8,7 @@ const vec = @import("../math/vec.zig");
 
 const parsing_error = error{
     unknown_number_of_slashes,
+    only_support_3_vert_faces,
     malformed_line,
 };
 
@@ -41,7 +42,10 @@ inline fn getTokenType(line: []const u8) ?token {
 // only works for 3d models as 2d models arent real and cant hurt me
 inline fn parseFaceData(line: []const u8) !FaceElements {
     const number_of_slashes = mem.count(u8, line, "/");
+    const number_of_elements = mem.count(u8, line, " ");
+    if (number_of_elements != 3) return parsing_error.only_support_3_vert_faces;
     const vertex_normal_check = if (mem.indexOf(u8, line, "//") != null) true else false;
+    // std.debug.print("number_of_slashes {}\n", .{number_of_slashes});
     const faceelement = switch (number_of_slashes) {
         0 =>
         // just vertex
@@ -162,32 +166,33 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
     var elements = Arraylist(FaceElements).init(allocator);
     defer elements.deinit();
 
-    var lines = mem.split(u8, data, file.eol);
+    var lines = mem.split(u8, data, if (mem.containsAtLeast(u8, data, 1, "\r")) "\r\n" else "\n");
     while (lines.next()) |line| {
         // std.debug.print("{s}\n", .{line});
         const token_type: ?token = getTokenType(line);
+        // std.debug.print("token = {any}\n", .{token_type});
 
         if (token_type) |t| {
             switch (t) {
                 token.comment => {
-                    // std.debug.print("token type {s} : ", .{"comment"});
+                    std.debug.print("token type : {s} \n", .{"comment"});
                 },
                 token.vertex => {
-                    // std.debug.print("token type {s} : ", .{"vertex"});
+                    // std.debug.print("token type : {s} ", .{"vertex"});
                     var dat = mem.split(u8, line[2..], " ");
                     try verts.append(try std.fmt.parseFloat(f32, dat.first()));
                     try verts.append(try std.fmt.parseFloat(f32, dat.next() orelse "0"));
                     try verts.append(try std.fmt.parseFloat(f32, dat.next() orelse "0"));
                 },
                 token.vertex_normal => {
-                    // std.debug.print("token type {s} : ", .{"vertex_normal"});
+                    // std.debug.print("token type : {s} ", .{"vertex_normal"});
                     var dat = mem.split(u8, line[3..], " ");
                     try normals.append(try std.fmt.parseFloat(f32, dat.first()));
                     try normals.append(try std.fmt.parseFloat(f32, dat.next() orelse "0"));
                     try normals.append(try std.fmt.parseFloat(f32, dat.next() orelse "0"));
                 },
                 token.texture => {
-                    // std.debug.print("token type {s} : ", .{"texture"});
+                    // std.debug.print("token type : {s} ", .{"texture"});
                     var dat = mem.split(u8, line[3..], " ");
                     try texture.append(try std.fmt.parseFloat(f32, dat.first()));
                     try texture.append(try std.fmt.parseFloat(f32, dat.next() orelse "0"));
@@ -197,7 +202,7 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
                 },
             }
         } else {
-            // std.debug.print("token type {s} : ", .{"no token"});
+            std.debug.print("token type : {s} \n", .{"no token"});
         }
         // std.debug.print("{s}\n", .{line});
     }
@@ -206,6 +211,7 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
     // i really be copying a ton of faces
     // 3 points and 3 vectors make a face
     const num_elements = elements.items.len * 3 * 3;
+    // std.debug.print("elements_arr : {}\n", .{num_elements});
 
     var verts_arr = try allocator.alloc(f32, num_elements);
     var normals_arr = try allocator.alloc(f32, num_elements); // will be aligned with the verts array
@@ -214,7 +220,8 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
 
     for (elements.items, 0..) |element, i| {
         var j: u32 = 0;
-        while (j < 9) : (j += 1) elements_arr[i * 9 + j] = @as(u32, @intCast(i)) * 9 + j;
+        while (j < 9) : (j += 1)
+            elements_arr[i * 9 + j] = @as(u32, @intCast(i)) * 9 + j;
 
         mem.copy(f32, verts_arr[i * 9 + 0 .. i * 9 + 3], verts.items[(element.vertex_indexes[0] - 1) * 3 .. (element.vertex_indexes[0] - 1) * 3 + 3]);
         mem.copy(f32, verts_arr[i * 9 + 3 .. i * 9 + 6], verts.items[(element.vertex_indexes[1] - 1) * 3 .. (element.vertex_indexes[1] - 1) * 3 + 3]);
