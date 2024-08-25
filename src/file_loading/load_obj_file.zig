@@ -223,20 +223,20 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
         while (j < 9) : (j += 1)
             elements_arr[i * 9 + j] = @as(u32, @intCast(i)) * 9 + j;
 
-        mem.copy(f32, verts_arr[i * 9 + 0 .. i * 9 + 3], verts.items[(element.vertex_indexes[0] - 1) * 3 .. (element.vertex_indexes[0] - 1) * 3 + 3]);
+        mem.copy(f32, verts_arr[i * 9 + 0 .. i * 9 + 3], verts.items[(element.vertex_indexes[2] - 1) * 3 .. (element.vertex_indexes[2] - 1) * 3 + 3]);
         mem.copy(f32, verts_arr[i * 9 + 3 .. i * 9 + 6], verts.items[(element.vertex_indexes[1] - 1) * 3 .. (element.vertex_indexes[1] - 1) * 3 + 3]);
-        mem.copy(f32, verts_arr[i * 9 + 6 .. i * 9 + 9], verts.items[(element.vertex_indexes[2] - 1) * 3 .. (element.vertex_indexes[2] - 1) * 3 + 3]);
+        mem.copy(f32, verts_arr[i * 9 + 6 .. i * 9 + 9], verts.items[(element.vertex_indexes[0] - 1) * 3 .. (element.vertex_indexes[0] - 1) * 3 + 3]);
 
         if (element.texture_indexes) |tex_index| {
-            mem.copy(f32, texture_arr[i * 6 + 0 .. i * 6 + 2], texture.items[(tex_index[0] - 1) * 2 .. (tex_index[0] - 1) * 2 + 2]);
+            mem.copy(f32, texture_arr[i * 6 + 0 .. i * 6 + 2], texture.items[(tex_index[2] - 1) * 2 .. (tex_index[2] - 1) * 2 + 2]);
             mem.copy(f32, texture_arr[i * 6 + 2 .. i * 6 + 4], texture.items[(tex_index[1] - 1) * 2 .. (tex_index[1] - 1) * 2 + 2]);
-            mem.copy(f32, texture_arr[i * 6 + 4 .. i * 6 + 6], texture.items[(tex_index[2] - 1) * 2 .. (tex_index[2] - 1) * 2 + 2]);
+            mem.copy(f32, texture_arr[i * 6 + 4 .. i * 6 + 6], texture.items[(tex_index[0] - 1) * 2 .. (tex_index[0] - 1) * 2 + 2]);
         }
 
         if (element.normal_indexes) |norm_index| {
-            mem.copy(f32, normals_arr[i * 9 + 0 .. i * 9 + 3], normals.items[(norm_index[0] - 1) * 3 .. (norm_index[0] - 1) * 3 + 3]);
+            mem.copy(f32, normals_arr[i * 9 + 0 .. i * 9 + 3], normals.items[(norm_index[2] - 1) * 3 .. (norm_index[2] - 1) * 3 + 3]);
             mem.copy(f32, normals_arr[i * 9 + 3 .. i * 9 + 6], normals.items[(norm_index[1] - 1) * 3 .. (norm_index[1] - 1) * 3 + 3]);
-            mem.copy(f32, normals_arr[i * 9 + 6 .. i * 9 + 9], normals.items[(norm_index[2] - 1) * 3 .. (norm_index[2] - 1) * 3 + 3]);
+            mem.copy(f32, normals_arr[i * 9 + 6 .. i * 9 + 9], normals.items[(norm_index[0] - 1) * 3 .. (norm_index[0] - 1) * 3 + 3]);
         }
         // std.debug.print("{any}\n", .{verts_arr});
     }
