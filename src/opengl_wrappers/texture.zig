@@ -19,9 +19,8 @@ pub const Texture = struct {
         const data = try file.Tga.load(allocator, filename);
         defer allocator.free(data.data);
         gl.genTextures(1, &self.texture_id);
-        gl.activeTexture(gl.TEXTURE0 + count);
-        count += 1;
-        self.texture_spot = count;
+        gl.activeTexture(gl.TEXTURE0);
+        self.texture_spot = gl.TEXTURE0;
         gl.bindTexture(gl.TEXTURE_2D, self.texture_id);
         const fomat: gl.GLenum = switch (data.header.bits_per_pixel) {
             1 * 8 => gl.R8,
@@ -51,6 +50,7 @@ pub const Texture = struct {
     }
 
     pub fn useTexture(self: Self) void {
-        gl.activeTexture(gl.TEXTURE0 + self.texture_spot);
+        gl.bindTexture(gl.TEXTURE_2D, self.texture_id);
+        gl.activeTexture(gl.TEXTURE0);
     }
 };
