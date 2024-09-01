@@ -24,9 +24,12 @@ pub fn main() !void {
     app.programs.basic_program_texture.camera = &app.camera;
     std.debug.print("loading\n", .{});
     app.programs.basic_program_texture.objects[0] = try app.obj_loader_service.load("objects/Crab.obj", .obj);
-
+    var plane = try app.obj_loader_service.load("objects/plane.obj", .obj);
+    plane.texture = try tex.Texture.init(allocator, "textures/sky_box_2.tga");
+    plane.pos = vec.init3(10.0, 2.0, 4.0);
     var cube = try app.obj_loader_service.load("objects/cube.obj", .obj);
-    cube.texture = try tex.Texture.init(allocator, "textures/fish_texture.tga");
+    cube.texture = try tex.Texture.init(allocator, "textures/sky_box_2.tga");
+
     var crab = try app.obj_loader_service.load("objects/Crab.obj", .obj);
     crab.texture = try tex.Texture.init(allocator, "textures/Crab_D.tga");
     for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
@@ -41,6 +44,7 @@ pub fn main() !void {
         app.programs.basic_program_texture.objects[dex] = ject;
     }
     app.programs.basic_program_texture.objects[0] = cube;
+    app.programs.basic_program_texture.objects[1] = plane;
 
     const light: vec.Vec4 = vec.init4(5, 10, 7, 1);
     const lighteye: vec.Vec4 = app.camera.view_matrix.MulVec(light);
