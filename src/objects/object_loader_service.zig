@@ -41,7 +41,7 @@ pub const ObjectService = struct {
                 .pos = vec.Vec3.zeros(),
                 .roation = vec.Vec3.zeros(),
                 .render = self.cache.get(object_path) orelse undefined, //[TODO] make a defaul obj for this to load
-                .texture = undefined,
+                .texture = null,
             };
         } else {
             var renderer = render.renderer.init();
