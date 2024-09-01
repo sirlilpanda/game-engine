@@ -23,11 +23,11 @@ pub fn main() !void {
     app.programs.basic_program_texture = try basic.createBasicProgramWTexture(allocator);
     app.programs.basic_program_texture.camera = &app.camera;
     std.debug.print("loading\n", .{});
-    app.programs.basic_program_texture.objects[0] = try app.obj_loader_service.load("game_objects/Crab.obj", .obj);
+    app.programs.basic_program_texture.objects[0] = try app.obj_loader_service.load("objects/Crab.obj", .obj);
 
-    var cube = try app.obj_loader_service.load("game_objects/cube.obj", .obj);
+    var cube = try app.obj_loader_service.load("objects/cube.obj", .obj);
     cube.texture = try tex.Texture.init(allocator, "textures/fish_texture.tga");
-    var crab = try app.obj_loader_service.load("game_objects/Crab.obj", .obj);
+    var crab = try app.obj_loader_service.load("objects/Crab.obj", .obj);
     crab.texture = try tex.Texture.init(allocator, "textures/Crab_D.tga");
     for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
         var ject: obj.Object = undefined;
