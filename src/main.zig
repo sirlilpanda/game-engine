@@ -25,7 +25,6 @@ const CDR: f32 = std.math.pi / 180.0;
 
 var obj_loader_service: obj_loader.ObjectService = undefined;
 var index: u32 = 0;
-var objects: [512]obj.Object = undefined;
 var crab: obj.Object = undefined;
 
 var camera: cam.Camera = undefined;
@@ -70,48 +69,13 @@ fn printDebug() void {
 }
 
 pub fn main() !void {
-    const wind = try window.Window.init(screen_width, screen_hight);
-    wind.hideCursor();
-
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    try GL_init(allocator, wind);
-
-    // var anamation_thread = try std.Thread.spawn(.{}, spin, .{});
-    // anamation_thread.detach();
-
-    var timer = try time.Timer.start();
-    while (!wind.shouldClose()) : (i +%= 1) {
-        const delta_time = @as(f32, @floatFromInt(timer.lap())) * 0.000000001;
-        const fps = @reduce(.Add, win);
-        std.debug.print("fps : {:.3}\r", .{fps});
-        win[i] = (1 / (delta_time)) / win_size;
-        glfw.pollEvents();
-        const dir = try input(&camera, delta_time, wind);
-        GL_Render(dir);
-        wind.swapBuffer();
-        // time.sleep(10000000);
-    }
-    keep_running = true;
-    printer.clear();
-    obj_loader_service.deinit();
-}
-
-fn GL_init(allocator: Allocator, wind: window.Window) !void {
-    prog = basic.BasicProgramTex.init();
-
-    const text = try tex.Texture.init(allocator, "textures/Crab_D.tga");
-    _ = text;
-    const vert = try shader.Shader.init(allocator, "shaders/crab.vert", .vertex);
-    const frag = try shader.Shader.init(allocator, "shaders/crab.frag", .frag);
-
-    prog.load_shader(vert);
-    prog.load_shader(frag);
-
-    prog.link();
-    prog.use();
+    const wind = try window.Window.init(screen_width, screen_hight);
+    obj_loader_service = try obj_loader.ObjectService.init(allocator);
+    prog = try basic.createBasicProgramWTexture(allocator);
 
     camera = cam.Camera.init(
         90,
@@ -120,51 +84,57 @@ fn GL_init(allocator: Allocator, wind: window.Window) !void {
         10000,
         vec.init3(0, 0, 0),
     );
+    prog.camera = &camera;
+
+    const text = try tex.Texture.init(allocator, "textures/Crab_D.tga");
+    _ = text;
 
     mat.Mat4x4.debug_print_matrix(camera.projection_matrix);
     const light: vec.Vec4 = vec.init4(5, 10, 7, 1);
-    // const lighteye: vec.Vec4 = camera.view_matrix.MulVec(light);
-    prog.uniforms.lgtUniform.sendVec4(light);
+    const lighteye: vec.Vec4 = camera.view_matrix.MulVec(light);
+    prog.uniforms.lgtUniform.sendVec4(lighteye);
     prog.uniforms.textureUniform.send1Uint(0);
-    gl.clearColor(0, 0, 0, 1);
-    gl.enable(gl.DEPTH_TEST); // cull face
-    gl.cullFace(gl.BACK); // cull back face
 
-    obj_loader_service = try obj_loader.ObjectService.init(allocator);
-    crab = try obj_loader_service.load("objects/crab.obj", .obj);
-    const cube = try obj_loader_service.load("objects/cube.obj", .obj);
-    for (objects, 0..) |_, dex| {
-        objects[dex] = crab;
-        objects[dex].pos = vec.init3(
+    crab = try obj_loader_service.load("objects/Crab.obj", .obj);
+    // const cube = try obj_loader_service.load("objects/Crab.obj", .obj);
+    for (prog.objects, 0..) |_, dex| {
+        var ject: obj.Object = undefined;
+
+        ject = crab;
+        ject.pos = vec.init3(
             5 * @sin(@as(f32, @floatFromInt(dex))),
             5 * @cos(@as(f32, @floatFromInt(dex))),
             0,
         );
+        prog.objects[dex] = ject;
     }
-    objects[0] = crab;
-    objects[0].pos = vec.Vec3.number(0);
-    objects[0].roation = vec.Vec3.number(0);
 
-    objects[1] = cube;
-    objects[1].pos = vec.Vec3.number(0);
-    objects[1].roation = vec.Vec3.number(0);
+    var anamation_thread = try std.Thread.spawn(.{}, spin, .{});
+    anamation_thread.detach();
 
-    objects[2] = cube;
-    objects[2].pos = vec.init3(light.x(), light.y(), light.z());
-    objects[2].roation = vec.Vec3.number(0);
+    gl.clearColor(0, 0, 0, 1);
+    gl.enable(gl.DEPTH_TEST); // cull face
+    gl.cullFace(gl.BACK); // cull back face
+    wind.hideCursor();
+    var timer = try time.Timer.start();
+    while (!wind.shouldClose()) : (i +%= 1) {
+        const delta_time = @as(f32, @floatFromInt(timer.lap())) * 0.000000001;
+        const fps = @reduce(.Add, win);
+        std.debug.print("fps : {:.3}\r", .{fps});
+        win[i] = (1 / (delta_time)) / win_size;
+        glfw.pollEvents();
+        try input(&camera, delta_time, wind);
+        GL_Render();
+        wind.swapBuffer();
+    }
+    keep_running = true;
+    printer.clear();
+    obj_loader_service.deinit();
 }
 
-fn GL_Render(dir: vec.Vec3) void {
-    camera.updateFps(dir);
-
+fn GL_Render() void {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    for (objects) |s| {
-        prog.uniforms.draw(camera, s);
-    }
-
-    prog.uniforms.draw(camera, objects[0]);
-
+    prog.renderAll();
     gl.flush();
 }
 
@@ -172,9 +142,9 @@ var last = vec.init2(0, 0);
 var pressed: bool = false;
 var speed: f32 = 3.0;
 
-fn input(came: *cam.Camera, delta_time: f32, windor: window.Window) !vec.Vec3 {
+fn input(came: *cam.Camera, delta_time: f32, windor: window.Window) !void {
     const windr = windor.window;
-    const sense = 1000;
+    const sense = 100;
     const mouse_delta = windr.getCursorPos();
     const mouse_vec = vec.init2(@floatCast(mouse_delta.xpos), @floatCast(mouse_delta.ypos));
     const delta = mouse_vec.vec - last.vec;
@@ -203,12 +173,12 @@ fn input(came: *cam.Camera, delta_time: f32, windor: window.Window) !vec.Vec3 {
     if (windr.getKey(glfw.Key.equal) == glfw.Action.press)
         speed -= 1;
 
-    if (windr.getKey(glfw.Key.f) == glfw.Action.press) {
-        index +%= 1;
-        if (index >= 512) index = 0;
-        objects[index] = crab;
-        objects[index].pos = camera.eye;
-    }
+    // if (windr.getKey(glfw.Key.f) == glfw.Action.press) {
+    //     index +%= 1;
+    //     if (index >= 512) index = 0;
+    //     prog.objects[index] = crab;
+    //     prog.objects[index].pos = camera.eye;
+    // }
 
     if (windr.getKey(glfw.Key.r) == glfw.Action.press) {
         if (prog.reload() == shader.ShaderErrors.failed_to_compile) {
@@ -227,5 +197,5 @@ fn input(came: *cam.Camera, delta_time: f32, windor: window.Window) !vec.Vec3 {
         pressed = false;
     }
 
-    return dir;
+    camera.updateFps(dir);
 }
