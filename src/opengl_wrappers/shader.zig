@@ -34,10 +34,13 @@ pub fn createShaderProgram(vertex_shader_path: []const u8, fragment_shader_path:
     return program;
 }
 
+pub const static_shader_name = "static";
+
 const quiet: bool = true;
 
 pub const ShaderErrors = error{
     failed_to_compile,
+    static_shader_cant_reload,
 };
 
 pub const ShaderTypes = enum {
@@ -75,7 +78,7 @@ pub const Shader = struct {
 
         gl.shaderSource(shader_id, 1, @ptrCast(&shaderfile), null);
         gl.compileShader(shader_id);
-        try chech_status(shader_id, allocator);
+        try check_status(shader_id, allocator);
 
         return Self{
             .id = shader_id,
@@ -85,7 +88,31 @@ pub const Shader = struct {
         };
     }
 
-    fn chech_status(shader_id: gl.GLuint, allocator: Allocator) !void {
+    pub fn init_with_file(allocator: Allocator, shader_file: []const u8, shader_type: ShaderTypes) !Self {
+        if (!quiet) std.debug.print("\nfile : {s}\n", .{shader_file});
+
+        var shader_id = gl.createShader(switch (shader_type) {
+            ShaderTypes.vertex => gl.VERTEX_SHADER,
+            ShaderTypes.frag => gl.FRAGMENT_SHADER,
+            ShaderTypes.compute => gl.COMPUTE_SHADER,
+            ShaderTypes.geometry => gl.GEOMETRY_SHADER,
+            ShaderTypes.tesslation_control_shader => gl.TESS_CONTROL_SHADER,
+            ShaderTypes.tesslation_eval_shader => gl.TESS_EVALUATION_SHADER,
+        });
+
+        gl.shaderSource(shader_id, 1, @ptrCast(&shader_file), null);
+        gl.compileShader(shader_id);
+        try check_status(shader_id, allocator);
+
+        return Self{
+            .id = shader_id,
+            .shader_path = static_shader_name,
+            .allocator = allocator,
+            .shader_type = shader_type,
+        };
+    }
+
+    fn check_status(shader_id: gl.GLuint, allocator: Allocator) !void {
         var status: gl.GLint = undefined;
         gl.getShaderiv(shader_id, gl.COMPILE_STATUS, &status);
         if (status == gl.FALSE) {
@@ -100,7 +127,11 @@ pub const Shader = struct {
     }
 
     pub fn reload(self: Self) !Self {
-        return try init(self.allocator, self.shader_path, self.shader_type);
+        if (std.mem.eql(u8, self.shader_path, static_shader_name)) {
+            return ShaderErrors.static_shader_cant_reload;
+        } else {
+            return try init(self.allocator, self.shader_path, self.shader_type);
+        }
     }
 
     pub fn unload(self: Self) void {

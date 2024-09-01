@@ -4,6 +4,7 @@ const std = @import("std");
 
 const program = @import("program.zig");
 const file = @import("../file_loading/tga.zig");
+const vec = @import("../math/vec.zig");
 /// Default GLFW error handling callback
 fn errorCallback(error_code: glfw.ErrorCode, description: [:0]const u8) void {
     std.log.err("glfw: {}: {s}\n", .{ error_code, description });
@@ -18,6 +19,7 @@ pub const Window = struct {
     const Self = @This();
 
     window: glfw.Window,
+    last_mouse_pos: vec.Vec2 = vec.init2(0.0, 0.0),
 
     pub fn init(width: u32, height: u32) !Self {
         glfw.setErrorCallback(errorCallback);
@@ -46,7 +48,13 @@ pub const Window = struct {
 
     pub fn getAspectRatio(self: Self) f32 {
         const size = self.window.getSize();
-        return @as(f32, @floatFromInt(size.width)) / @as(f32, @floatFromInt(size.height));
+        return @as(
+            f32,
+            @floatFromInt(size.width),
+        ) / @as( // --------------------------------- // looks like a fraction
+            f32,
+            @floatFromInt(size.height),
+        );
     }
 
     pub fn runRoutine(self: Self) !void {
@@ -59,6 +67,18 @@ pub const Window = struct {
 
     pub fn showCursor(self: Self) void {
         self.window.setInputModeCursor(.normal);
+    }
+
+    pub inline fn getCursorPos(self: Self) vec.Vec2 {
+        const mouse_pos = self.window.getCursorPos();
+        return vec.init2(@floatCast(mouse_pos.xpos), @floatCast(mouse_pos.ypos));
+    }
+
+    pub inline fn getCursorDelta(self: *Self) vec.Vec2 {
+        const current_pos = self.getCursorPos();
+        const mouse_delta = current_pos.sub(self.last_mouse_pos);
+        self.last_mouse_pos = current_pos;
+        return mouse_delta;
     }
 
     pub inline fn swapBuffer(self: Self) void {

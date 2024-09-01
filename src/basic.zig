@@ -13,7 +13,7 @@ pub const BasicUniforms = struct {
     norMatrixUniform: uni.Uniform = uni.Uniform.init("norMatrix"),
     lgtUniform: uni.Uniform = uni.Uniform.init("lightPos"),
 
-    pub fn draw(self: Self, camera: cam.Camera, object: obj.Object) void {
+    pub fn draw(self: Self, camera: *cam.Camera, object: obj.Object) void {
         // i dont know if this is faster
         var model = mat.Mat4x4.idenity();
 
@@ -43,13 +43,20 @@ pub const BasicUniformsText = struct {
     lgtUniform: uni.Uniform = uni.Uniform.init("lightPos"),
     textureUniform: uni.Uniform = uni.Uniform.init("tSampler"),
 
-    pub fn draw(self: Self, camera: cam.Camera, object: obj.Object) void {
+    pub fn draw(self: Self, camera: *cam.Camera, object: obj.Object) void {
         // i dont know if this is faster
+
+        // if the object has a texture swap to it
+        if (object.texture) |tex| {
+            tex.useTexture();
+            std.debug.print("texture index : {}\n", .{tex.texture_spot});
+        }
 
         var model = mat.Mat4x4.idenity();
 
         model = model.mul(mat.Mat4x4.translate(object.pos))
-            .mul(mat.Mat4x4.rotate(object.roation.vec[1], vec.init3(1, 1, 0)));
+            .mul(mat.Mat4x4.rotate(object.roation.vec[1], vec.init3(0, 1, 0)))
+            .mul(mat.Mat4x4.rotate(object.roation.vec[0], vec.init3(1, 0, 0)));
         self.mMatrixUniform.sendMatrix4(false, model);
 
         const mvMatrix = camera.view_matrix.mul(model);
@@ -65,4 +72,23 @@ pub const BasicUniformsText = struct {
     }
 };
 
-pub const BasicProgramTex = program.Program(BasicUniformsText);
+pub const BasicProgramTex = program.Program(BasicUniformsText, 32);
+
+const shader = @import("opengl_wrappers/shader.zig");
+
+pub fn createBasicProgramWTexture(allocator: std.mem.Allocator) !BasicProgramTex {
+    var prog = BasicProgramTex.init();
+    const vert = try shader.Shader.init(allocator, "shaders/crab.vert", .vertex);
+    const frag = try shader.Shader.init(allocator, "shaders/crab.frag", .frag);
+    prog.load_shader(vert);
+    prog.load_shader(frag);
+    prog.link();
+    prog.use();
+
+    const light: vec.Vec4 = vec.init4(5, 10, 7, 1);
+    // const lighteye: vec.Vec4 = camera.view_matrix.MulVec(light);
+    prog.uniforms.lgtUniform.sendVec4(light);
+    prog.uniforms.textureUniform.send1Uint(0);
+
+    return prog;
+}

@@ -8,8 +8,9 @@ const obj = @import("../objects/object.zig");
 const Allocator = std.mem.Allocator;
 
 const AMOUNT_OF_SHADERS = 8;
-
-pub fn Program(comptime unifrom_type: type) type {
+// you will fuck up your computer if you make this too big
+// might do an array list in the future
+pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type {
     return struct {
         const Self = @This();
 
@@ -17,15 +18,16 @@ pub fn Program(comptime unifrom_type: type) type {
         shaders: [AMOUNT_OF_SHADERS]?shader.Shader, //does this really need to be dynamic
         shader_index: u8,
         uniforms: unifrom_type,
-        camera: cam.Camera,
-
+        camera: *cam.Camera,
+        objects: [amount_of_object]?obj.Object,
         pub fn init() Self {
             return Self{
                 .program_id = gl.createProgram(),
-                .shaders = [_]?shader.Shader{null} ** AMOUNT_OF_SHADERS, 
+                .shaders = [_]?shader.Shader{null} ** AMOUNT_OF_SHADERS,
                 .shader_index = 0,
                 .uniforms = undefined,
                 .camera = undefined,
+                .objects = [_]?obj.Object{null} ** amount_of_object,
             };
         }
 
@@ -94,8 +96,9 @@ pub fn Program(comptime unifrom_type: type) type {
             self.shaders = prog.shaders;
             self.shader_index = prog.shader_index;
             self.uniforms = prog.uniforms;
-            self.camera = prog.camera;        
+            self.camera = prog.camera;
         }
+
         // this was done so i can swap programs
         pub fn use(self: Self) void {
             gl.useProgram(self.program_id);
@@ -106,6 +109,16 @@ pub fn Program(comptime unifrom_type: type) type {
                 if (s) |sha| sha.unload();
             }
             gl.deleteProgram(self.program_id);
+        }
+
+        pub fn renderAll(self: Self) void {
+            for (self.objects) |object| {
+                if (object) |o| self.uniforms.draw(self.camera, o);
+            }
+        }
+
+        pub fn renderAtIndex(self: Self, index: u32) void {
+            if (self.objects[index]) |object| self.uniforms.draw(self.camera, object);
         }
     };
 }
