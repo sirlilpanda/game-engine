@@ -51,10 +51,21 @@ pub const Tga = struct {
         if (try obj_file.read(&head) != @sizeOf(Header)) return TgaFileError.incorrect_header_length;
         const header = std.mem.bytesToValue(Header, head[0..]);
         std.debug.print("header : {?}\n", .{header});
+
         const amount: usize = @as(usize, header.height) * @as(usize, header.wdith) * @as(usize, header.bits_per_pixel / 8);
 
-        const data = try allocator.alloc(u8, amount);
+        var data = try allocator.alloc(u8, amount);
         _ = try obj_file.readAll(data);
+
+        // honestly i have no clue why i have to do this
+        std.mem.reverse(u8, data);
+
+        var row: usize = 0;
+        while (row < header.height) : (row += 1) {
+            std.debug.print("row : {}\n", .{row});
+            std.mem.reverse(u8, data[(row * header.wdith * @as(usize, header.bits_per_pixel / 8)) .. (row * header.wdith + header.wdith) * @as(usize, header.bits_per_pixel / 8)]);
+        }
+
         return Self{
             .header = header,
             .data = data,
@@ -83,3 +94,26 @@ test "load_file" {
 
     allocator.free(file.data);
 }
+
+// var i: usize = 0;
+// while (i < header.wdith) : (i += 1) {
+//     std.mem.swap(
+//         u8,
+//         &data[top * header.wdith + i],
+//         &data[bottom * header.wdith + i],
+//     );
+// }
+
+// var top: usize = 0;
+// var bottom: usize = header.height - 1;
+
+// while (top < header.height / 2) : ({
+//     top += 1;
+//     bottom -= 1;
+// }) {
+//     std.mem.swap(
+//         []u8,
+//         @constCast(&data[top * header.wdith .. top * header.wdith + header.wdith]),
+//         @constCast(&data[bottom * header.wdith .. bottom * header.wdith + header.wdith]),
+//     );
+// }
