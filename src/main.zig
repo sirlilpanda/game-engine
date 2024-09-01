@@ -25,37 +25,35 @@ pub fn main() !void {
     std.debug.print("loading\n", .{});
     app.programs.basic_program_texture.objects[0] = try app.obj_loader_service.load("objects/Crab.obj", .obj);
     var plane = try app.obj_loader_service.load("objects/plane.obj", .obj);
-    plane.texture = try tex.Texture.init(allocator, "textures/sky_box_2.tga");
+    plane.texture = try tex.Texture.init(allocator, "textures/sky_box_.tga");
     plane.pos = vec.init3(10.0, 2.0, 4.0);
     var cube = try app.obj_loader_service.load("objects/cube.obj", .obj);
-    cube.texture = try tex.Texture.init(allocator, "textures/sky_box_2.tga");
-
+    cube.texture = try tex.Texture.init(allocator, "textures/sky_box_.tga");
+    cube.scale = vec.init3(10000, 10000, 10000);
     var crab = try app.obj_loader_service.load("objects/Crab.obj", .obj);
     crab.texture = try tex.Texture.init(allocator, "textures/Crab_D.tga");
+
     for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
         var ject: obj.Object = undefined;
 
         ject = crab;
         ject.pos = vec.init3(
-            5 * @sin(@as(f32, @floatFromInt(dex))),
-            5 * @cos(@as(f32, @floatFromInt(dex))),
+            2 * @sin(@as(f32, @floatFromInt(dex))),
+            2 * @cos(@as(f32, @floatFromInt(dex))),
             0,
         );
         app.programs.basic_program_texture.objects[dex] = ject;
     }
     app.programs.basic_program_texture.objects[0] = cube;
-    app.programs.basic_program_texture.objects[1] = plane;
-
-    const light: vec.Vec4 = vec.init4(5, 10, 7, 1);
-    const lighteye: vec.Vec4 = app.camera.view_matrix.MulVec(light);
-    app.programs.basic_program_texture.uniforms.lgtUniform.sendVec4(lighteye);
-    app.programs.basic_program_texture.uniforms.textureUniform.send1Uint(0);
+    app.programs.basic_program_texture.objects[1] = cube;
+    app.programs.basic_program_texture.objects[1].?.scale = vec.init3(1, 1, 1);
 
     std.debug.print("obj : {any}\n", .{app.programs.basic_program_texture.objects[0]});
 
     while (!app.shouldStop()) {
-        app.input();
+        try app.input();
         app.render();
+        std.debug.print("fps : {}]\r", .{app.fps()});
     }
 
     app.free();
