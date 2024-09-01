@@ -22,17 +22,19 @@ pub const Texture = struct {
         gl.activeTexture(gl.TEXTURE0);
         self.texture_spot = gl.TEXTURE0;
         gl.bindTexture(gl.TEXTURE_2D, self.texture_id);
+
+        // DONT FOR GET TO CHANGES THESE BACK TO RGB WHEN USING OTHER DATATYPES
         const fomat: gl.GLenum = switch (data.header.bits_per_pixel) {
             1 * 8 => gl.R8,
-            3 * 8 => gl.RGB,
-            4 * 8 => gl.RGBA,
+            3 * 8 => gl.BGR,
+            4 * 8 => gl.BGRA,
             else => gl.R8,
         };
 
         gl.texImage2D(
             gl.TEXTURE_2D,
             0,
-            gl.RGB,
+            gl.RGBA,
             data.header.wdith,
             data.header.height,
             0,
