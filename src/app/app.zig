@@ -24,6 +24,7 @@ const obj_loader = @import("../objects/object_loader_service.zig");
 const prog_error = error{
     program_not_in_provided_programs,
 };
+var speed: f32 = 10;
 
 pub fn App(comptime Programs: type) type {
     return struct {
@@ -126,7 +127,6 @@ pub fn App(comptime Programs: type) type {
             glfw.pollEvents();
             const sense = 50.0;
             const delta = self.window.getCursorDelta();
-            var speed: f32 = 10;
             var dir = vec.Vec3.zeros();
             self.camera.yaw -= delta.x() * self.delta_time * sense;
             self.camera.pitch -= (delta.y() * self.delta_time * sense);
@@ -155,11 +155,11 @@ pub fn App(comptime Programs: type) type {
                 // std.debug.print("left_control : pressed\n", .{});
                 dir.set_y(-speed * self.delta_time);
             }
-            // std.debug.print("dir", .{});
-            // if (self.window.getKey(glfw.Key.minus) == glfw.Action.press)
-            //     speed += 1;
-            // if (self.window.getKey(glfw.Key.equal) == glfw.Action.press)
-            //     speed -= 1;
+            std.debug.print("dir", .{});
+            if (self.window.window.getKey(glfw.Key.minus) == glfw.Action.press)
+                speed += 1;
+            if (self.window.window.getKey(glfw.Key.equal) == glfw.Action.press)
+                speed -= 1;
 
             if (self.window.window.getKey(glfw.Key.r) == glfw.Action.press) {
                 inline for (std.meta.fields(Programs)) |f| {
