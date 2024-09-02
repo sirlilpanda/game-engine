@@ -28,6 +28,10 @@ const prog_error = error{
 pub fn App(comptime Programs: type) type {
     return struct {
         const Self = @This();
+
+        const win_size = 256;
+        fps_low_pass_window: @Vector(win_size, f32) = @splat(0),
+        fps_low_pass_window_index: u8 = 0,
         window: Window,
         programs: Programs,
         physic_objects: std.ArrayList(*obj.Object),
@@ -60,7 +64,7 @@ pub fn App(comptime Programs: type) type {
                 90,
                 self.window.getAspectRatio(),
                 0.1,
-                10000,
+                100000,
                 vec.init3(0, 0, 0),
             );
 
@@ -73,8 +77,14 @@ pub fn App(comptime Programs: type) type {
             return self;
         }
 
+        pub fn fps(self: Self) f32 {
+            return @reduce(.Add, self.fps_low_pass_window);
+        }
+
         pub fn shouldStop(self: *Self) bool {
             self.delta_time = @as(f32, @floatFromInt(self.timer.lap())) * 0.000000001;
+            self.fps_low_pass_window[self.fps_low_pass_window_index] = (1 / (self.delta_time)) / win_size;
+            self.fps_low_pass_window_index +%= 1;
             return self.window.shouldClose();
         }
 
@@ -90,7 +100,7 @@ pub fn App(comptime Programs: type) type {
         }
 
         pub fn render(self: Self) void {
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.clear(gl.DEPTH_BUFFER_BIT);
 
             inline for (std.meta.fields(Programs)) |f| {
                 @field(self.programs, f.name).use();
@@ -98,13 +108,13 @@ pub fn App(comptime Programs: type) type {
             }
             self.window.swapBuffer();
 
-            gl.flush();
+            // gl.flush();
         }
 
-        pub fn input(self: *Self) void {
-            std.debug.print("delta time {}\n", .{self.delta_time});
+        pub fn input(self: *Self) !void {
+            // std.debug.print("delta time {}\n", .{self.delta_time});
             glfw.pollEvents();
-            const sense = 10.0;
+            const sense = 50.0;
             const delta = self.window.getCursorDelta();
             var speed: f32 = 10;
             var dir = vec.Vec3.zeros();
@@ -112,27 +122,27 @@ pub fn App(comptime Programs: type) type {
             self.camera.pitch -= (delta.y() * self.delta_time * sense);
 
             if (self.window.window.getKey(glfw.Key.w) == glfw.Action.press) {
-                std.debug.print("w : pressed\n", .{});
+                // std.debug.print("w : pressed\n", .{});
                 dir.set_x(speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.s) == glfw.Action.press) {
-                std.debug.print("s : pressed\n", .{});
+                // std.debug.print("s : pressed\n", .{});
                 dir.set_x(-speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.a) == glfw.Action.press) {
-                std.debug.print("a : pressed\n", .{});
+                // std.debug.print("a : pressed\n", .{});
                 dir.set_z(-speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.d) == glfw.Action.press) {
-                std.debug.print("d : pressed\n", .{});
+                // std.debug.print("d : pressed\n", .{});
                 dir.set_z(speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.space) == glfw.Action.press) {
-                std.debug.print("space : pressed\n", .{});
+                // std.debug.print("space : pressed\n", .{});
                 dir.set_y(speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.left_control) == glfw.Action.press) {
-                std.debug.print("left_control : pressed\n", .{});
+                // std.debug.print("left_control : pressed\n", .{});
                 dir.set_y(-speed * self.delta_time);
             }
             // std.debug.print("dir", .{});
@@ -141,11 +151,13 @@ pub fn App(comptime Programs: type) type {
             // if (self.window.getKey(glfw.Key.equal) == glfw.Action.press)
             //     speed -= 1;
 
-            // if (self.window.getKey(glfw.Key.r) == glfw.Action.press) {
-            //     if (self.prog.reload() == shader.ShaderErrors.failed_to_compile) {
-            //         std.debug.print("shader failed to complie\n", .{});
-            //     }
-            // }
+            if (self.window.window.getKey(glfw.Key.r) == glfw.Action.press) {
+                inline for (std.meta.fields(Programs)) |f| {
+                    if (@field(self.programs, f.name).reload() == shader.ShaderErrors.failed_to_compile) {
+                        std.debug.print("shader failed to complie\n", .{});
+                    }
+                }
+            }
 
             if (self.window.window.getKey(glfw.Key.escape) == glfw.Action.press) {
                 self.window.window.setShouldClose(true);
