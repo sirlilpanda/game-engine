@@ -6,7 +6,14 @@ const Allocator = std.mem.Allocator;
 const std_file_size = 2000;
 
 pub fn loadfile(allocator: Allocator, filename: []const u8) ![]u8 {
-    const shader_file: std.fs.File = try std.fs.cwd().openFile(filename, .{});
+    const file = std.fs.cwd().openFile(filename, .{});
+    var buffer: [256]u8 = undefined;
+
+    if (file == std.fs.File.OpenError.FileNotFound) {
+        std.debug.print("file : {s} not found\n", .{try std.fs.cwd().realpath(filename, &buffer)});
+    }
+
+    const shader_file: std.fs.File = try file;
     const file_end = try shader_file.getEndPos();
     const data = try allocator.alloc(u8, @as(usize, file_end + 1));
     const data_read = try shader_file.readAll(data);
@@ -63,6 +70,7 @@ pub const Shader = struct {
 
     pub fn init(allocator: Allocator, shader_path: []const u8, shader_type: ShaderTypes) !Self {
         const shaderfile: []u8 = try loadfile(allocator, shader_path);
+
         defer allocator.free(shaderfile);
 
         if (!quiet) std.debug.print("\nfile : {s}\n", .{shaderfile});

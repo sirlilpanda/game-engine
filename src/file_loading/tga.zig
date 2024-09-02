@@ -46,23 +46,26 @@ pub const Tga = struct {
     }
 
     pub fn load(allocator: Allocator, filename: []const u8) !Self {
-        const obj_file: std.fs.File = try std.fs.cwd().openFile(filename, .{});
+        const current_dir = std.fs.cwd();
+        var buffer: [256]u8 = undefined;
+
+        std.debug.print("std.fs.cwd : {s}\n", .{try current_dir.realpath(filename, &buffer)});
+        const obj_file: std.fs.File = try current_dir.openFile(filename, .{});
+
         var head: [@sizeOf(Header)]u8 = undefined;
         if (try obj_file.read(&head) != @sizeOf(Header)) return TgaFileError.incorrect_header_length;
         const header = std.mem.bytesToValue(Header, head[0..]);
-        std.debug.print("header : {?}\n", .{header});
 
         const amount: usize = @as(usize, header.height) * @as(usize, header.wdith) * @as(usize, header.bits_per_pixel / 8);
 
         var data = try allocator.alloc(u8, amount);
         _ = try obj_file.readAll(data);
-
+        std.debug.print("amount : {}\n", .{amount});
         // honestly i have no clue why i have to do this
         std.mem.reverse(u8, data);
-
+        std.debug.print("reversed\n", .{});
         var row: usize = 0;
         while (row < header.height) : (row += 1) {
-            std.debug.print("row : {}\n", .{row});
             std.mem.reverse(u8, data[(row * header.wdith * @as(usize, header.bits_per_pixel / 8)) .. (row * header.wdith + header.wdith) * @as(usize, header.bits_per_pixel / 8)]);
         }
 
@@ -87,8 +90,9 @@ test "load_file" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
-
-    const file = try Tga.load(allocator, "screenshot.tga");
+    const filename = "screenshot.tga";
+    std.debug.print("filename : {s}\n", .{filename});
+    const file = try Tga.load(allocator, filename);
 
     try file.save("test_rebuild.tga");
 

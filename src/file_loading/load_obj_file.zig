@@ -150,7 +150,14 @@ inline fn parseFaceData(line: []const u8) !FaceElements {
 }
 
 pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile {
-    const obj_file: std.fs.File = try std.fs.cwd().openFile(filename, .{});
+    const e_file = std.fs.cwd().openFile(filename, .{});
+    var buffer: [256]u8 = undefined;
+
+    if (e_file == std.fs.File.OpenError.FileNotFound) {
+        std.debug.print("file : {s} not found\n", .{try std.fs.cwd().realpath(filename, &buffer)});
+    }
+
+    const obj_file: std.fs.File = try e_file;
     const file_end = try obj_file.getEndPos();
     // std.debug.print("end : {}\n", .{file_end});
     const data = try allocator.alloc(u8, @as(usize, file_end));
