@@ -20,6 +20,7 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
         uniforms: unifrom_type,
         camera: *cam.Camera,
         objects: [amount_of_object]?obj.Object,
+
         pub fn init() Self {
             return Self{
                 .program_id = gl.createProgram(),
@@ -77,11 +78,20 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
         }
 
         pub fn reload(self: *Self) !void {
-            var prog = init();
+            var prog = Self{
+                .program_id = gl.createProgram(),
+                .shaders = [_]?shader.Shader{null} ** AMOUNT_OF_SHADERS,
+                .shader_index = 0,
+                .uniforms = undefined,
+                .camera = undefined,
+                .objects = [_]?obj.Object{null} ** amount_of_object,
+            };
+
             for (self.shaders) |s| {
                 if (s) |sha| {
                     const shad = sha.reload();
                     if (shad == shader.ShaderErrors.failed_to_compile) {
+                        std.debug.print("get unloaded egg\n", .{});
                         prog.unload();
                         return shader.ShaderErrors.failed_to_compile;
                     }
@@ -96,7 +106,8 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
             self.shaders = prog.shaders;
             self.shader_index = prog.shader_index;
             self.uniforms = prog.uniforms;
-            self.camera = prog.camera;
+
+            self.uniforms.reload();
         }
 
         // this was done so i can swap programs
@@ -119,6 +130,15 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
 
         pub fn renderAtIndex(self: Self, index: u32) void {
             if (self.objects[index]) |object| self.uniforms.draw(self.camera, object);
+        }
+
+        // supprising very useful for skyboxes
+        pub fn renderAllButAtIndex(self: Self, index: u32) void {
+            for (self.objects, 0..) |object, i| {
+                if (object != null and i != index) {
+                    self.uniforms.draw(self.camera, object.?);
+                }
+            }
         }
     };
 }
