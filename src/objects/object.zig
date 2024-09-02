@@ -6,29 +6,11 @@ const ren = @import("../opengl_wrappers/render.zig");
 const tex = @import("../opengl_wrappers/texture.zig");
 const std = @import("std");
 
-// pub const ObjectFactory = struct {
-//     const Self = @This();
-//     render: ren.renderer,
-
-//     pub fn init(r: ren.renderer) ObjectFactory {
-//         return Self{
-//             .render = r,
-//         };
-//     }
-
-//     pub fn make(self: ObjectFactory, pos: vec.Vec3, roation: vec.Vec3) Object {
-//         return Object{
-//             .pos = pos,
-//             .roation = roation,
-//             .render = self.render,
-//         };
-//     }
-// };
-
 pub const Object = struct {
     const Self = @This();
     pos: vec.Vec3,
     roation: vec.Vec3,
+    scale: vec.Vec3,
     //this is the thing that holds the vertex and texture data
     render: ren.renderer,
     texture: ?tex.Texture,
@@ -37,6 +19,7 @@ pub const Object = struct {
         return Self{
             .pos = v,
             .roation = vec.Vec3.zeros(),
+            .scale = vec.Vec3.ones(),
             .render = undefined,
             .texture = null,
         };
