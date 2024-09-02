@@ -40,6 +40,7 @@ pub const ObjectService = struct {
             return obj.Object{
                 .pos = vec.Vec3.zeros(),
                 .roation = vec.Vec3.zeros(),
+                .scale = vec.Vec3.ones(),
                 .render = self.cache.get(object_path) orelse undefined, //[TODO] make a defaul obj for this to load
                 .texture = null,
             };
@@ -57,6 +58,7 @@ pub const ObjectService = struct {
             return obj.Object{
                 .pos = vec.Vec3.zeros(),
                 .roation = vec.Vec3.zeros(),
+                .scale = vec.Vec3.ones(),
                 .render = renderer,
                 .texture = undefined,
             };
