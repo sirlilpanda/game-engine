@@ -11,6 +11,7 @@ pub const Object = struct {
     pos: vec.Vec3,
     roation: vec.Vec3,
     scale: vec.Vec3,
+    colour: vec.Vec4 = vec.Vec4.ones(),
     //this is the thing that holds the vertex and texture data
     render: ren.renderer,
     texture: ?tex.Texture,
@@ -31,6 +32,14 @@ pub const Object = struct {
 
     pub fn updateRoation(self: *Self, roation: vec.Vec3) void {
         self.roation = roation;
+    }
+
+    pub fn updateColour(self: *Self, colour: vec.Vec4) void {
+        self.colour = colour;
+    }
+
+    pub fn updateScale(self: *Self, scale: vec.Vec3) void {
+        self.scale = scale;
     }
 
     pub fn draw(self: Self) void {
