@@ -58,7 +58,7 @@ pub const Tga = struct {
 
         const amount: usize = @as(usize, header.height) * @as(usize, header.wdith) * @as(usize, header.bits_per_pixel / 8);
 
-        var data = try allocator.alloc(u8, amount);
+        const data = try allocator.alloc(u8, amount);
         _ = try obj_file.readAll(data);
         std.debug.print("amount : {}\n", .{amount});
         // honestly i have no clue why i have to do this

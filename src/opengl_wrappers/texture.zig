@@ -24,7 +24,7 @@ pub const Texture = struct {
         gl.bindTexture(gl.TEXTURE_2D, self.texture_id);
 
         // DONT FOR GET TO CHANGES THESE BACK TO RGB WHEN USING OTHER DATATYPES
-        const fomat: gl.GLenum = switch (data.header.bits_per_pixel) {
+        const format: gl.GLenum = switch (data.header.bits_per_pixel) {
             1 * 8 => gl.R8,
             3 * 8 => gl.BGR,
             4 * 8 => gl.BGRA,
@@ -38,7 +38,7 @@ pub const Texture = struct {
             data.header.wdith,
             data.header.height,
             0,
-            fomat,
+            format,
             gl.UNSIGNED_BYTE,
             @ptrCast(&data.data[0]),
         );

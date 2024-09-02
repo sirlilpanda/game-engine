@@ -75,7 +75,7 @@ pub const BasicUniformsText = struct {
     }
 
     pub fn reload(self: Self) void {
-        self.hasDiffuseLighting.send1Uint(1);
+        self.hasDiffuseLighting.send1Uint(0);
         self.ambient_colour.sendVec4(vec.init4(0.2, 0.2, 0.2, 1));
         self.obj_colour.sendVec4(vec.init4(1, 1, 1, 1));
         const light: vec.Vec4 = vec.init4(5, 10, 7, 1);

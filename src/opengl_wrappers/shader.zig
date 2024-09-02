@@ -32,7 +32,7 @@ pub fn createShaderProgram(vertex_shader_path: []const u8, fragment_shader_path:
     const vertex: Shader = try Shader.init(allocator, vertex_shader_path, gl.VERTEX_SHADER);
     const frag: Shader = try Shader.init(allocator, fragment_shader_path, gl.FRAGMENT_SHADER);
 
-    var program = gl.createProgram();
+    const program = gl.createProgram();
     gl.attachShader(program, vertex.id);
     gl.attachShader(program, frag.id);
     gl.linkProgram(program);
@@ -75,7 +75,7 @@ pub const Shader = struct {
 
         if (!quiet) std.debug.print("\nfile : {s}\n", .{shaderfile});
 
-        var shader_id = gl.createShader(switch (shader_type) {
+        const shader_id = gl.createShader(switch (shader_type) {
             ShaderTypes.vertex => gl.VERTEX_SHADER,
             ShaderTypes.frag => gl.FRAGMENT_SHADER,
             ShaderTypes.compute => gl.COMPUTE_SHADER,
@@ -99,7 +99,7 @@ pub const Shader = struct {
     pub fn init_with_file(allocator: Allocator, shader_file: []const u8, shader_type: ShaderTypes) !Self {
         if (!quiet) std.debug.print("\nfile : {s}\n", .{shader_file});
 
-        var shader_id = gl.createShader(switch (shader_type) {
+        const shader_id = gl.createShader(switch (shader_type) {
             ShaderTypes.vertex => gl.VERTEX_SHADER,
             ShaderTypes.frag => gl.FRAGMENT_SHADER,
             ShaderTypes.compute => gl.COMPUTE_SHADER,

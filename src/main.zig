@@ -30,7 +30,7 @@ pub fn main() !void {
     plane.pos = vec.init3(10.0, 2.0, 4.0);
 
     var cube = try app.obj_loader_service.load("objects/cube.obj", .obj);
-    cube.texture = try tex.Texture.init(allocator, "textures/sky_box_.tga");
+    cube.texture = try tex.Texture.init(allocator, "textures/white.tga");
     cube.scale = vec.init3(30000, 30000, 30000);
 
     var crab = try app.obj_loader_service.load("objects/Crab.obj", .obj);
@@ -51,12 +51,14 @@ pub fn main() !void {
     app.programs.basic_program_texture.objects[0] = cube;
     // if i want to overide back ground colours
     app.programs.basic_program_texture.objects[0].?.colour = vec.init4(2, 2, 2, 1);
-    // app.programs.basic_program_texture.objects[1] = cube;
-    // app.programs.basic_program_texture.objects[1].?.scale = vec.init3(1, 1, 1);
-    // app.programs.basic_program_texture.objects[1].?.colour = vec.init4(0, 0, 1, 1);
-    app.programs.basic_program_texture.objects[1] = try app.obj_loader_service.load("objects/4V5T.obj", .obj);
-    app.programs.basic_program_texture.objects[1].?.texture = tex.Texture.init(allocator, "textures/rgb.tga") catch null;
-    app.programs.basic_program_texture.objects[1].?.colour = vec.init4(0.7, 0.7, 0.7, 1);
+    app.programs.basic_program_texture.objects[0].?.texture = try tex.Texture.init(allocator, "textures/sky_box_2.tga");
+
+    app.programs.basic_program_texture.objects[1] = cube;
+    app.programs.basic_program_texture.objects[1].?.scale = vec.init3(1, 1, 1);
+    app.programs.basic_program_texture.objects[1].?.colour = vec.init4(1, 0, 1, 1);
+    // app.programs.basic_program_texture.objects[1] = try app.obj_loader_service.load("objects/4V5T.obj", .obj);
+    // app.programs.basic_program_texture.objects[1].?.texture = tex.Texture.init(allocator, "textures/rgb.tga") catch null;
+    // app.programs.basic_program_texture.objects[1].?.colour = vec.init4(0.7, 0.7, 0.7, 1);
 
     std.debug.print("obj : {any}\n", .{app.programs.basic_program_texture.objects[0]});
 
@@ -77,12 +79,12 @@ pub fn main() !void {
         app.input();
         app.render();
 
-        for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
-            if (dex != 0) {
-                app.programs.basic_program_texture.objects[dex].?.updateRoation(vec.init3(angle + 90, angle + 180, angle + 23));
-                app.programs.basic_program_texture.objects[dex].?.updateColour(vec.init4(r, b, g, 1));
-            }
-        }
+        // for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
+        //     if (dex != 0) {
+        //         app.programs.basic_program_texture.objects[dex].?.updateRoation(vec.init3(angle + 90, angle + 180, angle + 23));
+        //         app.programs.basic_program_texture.objects[dex].?.updateColour(vec.init4(r, b, g, 1));
+        //     }
+        // }
         std.debug.print("fps : {}]\r", .{app.fps()});
         // std.debug.print("cam {}\n", app.camera.eye);
         if (r > 1) r_dir = -1;
