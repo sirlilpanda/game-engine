@@ -4,13 +4,18 @@ const std = @import("std");
 const uniform = @import("uniform.zig");
 const cam = @import("camera.zig");
 const obj = @import("../objects/object.zig");
-
+const meta = @import("meta_wrapper.zig");
+const example_uniform = @import("program_uniform.zig").example_uniform;
 const Allocator = std.mem.Allocator;
 
 const AMOUNT_OF_SHADERS = 8;
 // you will fuck up your computer if you make this too big
 // might do an array list in the future
 pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type {
+    if (comptime !meta.interfaceCheck(
+        unifrom_type,
+        example_uniform,
+    )) @compileError("uniform type doesnt have correct traits");
     return struct {
         const Self = @This();
 
