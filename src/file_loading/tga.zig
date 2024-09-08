@@ -64,9 +64,17 @@ pub const Tga = struct {
         // honestly i have no clue why i have to do this
         std.mem.reverse(u8, data);
         std.debug.print("reversed\n", .{});
+
         var row: usize = 0;
         while (row < header.height) : (row += 1) {
             std.mem.reverse(u8, data[(row * header.wdith * @as(usize, header.bits_per_pixel / 8)) .. (row * header.wdith + header.wdith) * @as(usize, header.bits_per_pixel / 8)]);
+        }
+
+        if (@as(usize, header.bits_per_pixel / 8) == 3) {
+            var idex: usize = 0;
+            while (idex < data.len - 3) : (idex += 3) {
+                std.mem.swap(u8, &data[idex + 1], &data[idex + 2]);
+            }
         }
 
         return Self{
