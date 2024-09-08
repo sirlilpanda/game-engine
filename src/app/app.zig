@@ -20,6 +20,7 @@ const obj = @import("../objects/object.zig");
 const file = @import("../file_loading/loadfile.zig");
 const basic = @import("basic_program.zig");
 const obj_loader = @import("../objects/object_loader_service.zig");
+const PhysicsWorld = @import("../physics/physics_world.zig").PhysicsWorld;
 
 const prog_error = error{
     program_not_in_provided_programs,
@@ -35,7 +36,7 @@ pub fn App(comptime Programs: type) type {
         fps_low_pass_window_index: u8 = 0,
         window: Window,
         programs: Programs,
-        physic_objects: std.ArrayList(*obj.Object),
+        physics_thread: PhysicsWorld,
         obj_loader_service: obj_loader.ObjectService,
         camera: cam.Camera,
         alloc: Allocator, // just incase you want a global alloc
@@ -52,7 +53,7 @@ pub fn App(comptime Programs: type) type {
             var self = Self{
                 .window = undefined,
                 .programs = programs,
-                .physic_objects = undefined,
+                .physics_thread = PhysicsWorld.init(alloc),
                 .obj_loader_service = try obj_loader.ObjectService.init(alloc),
                 .camera = undefined,
                 .alloc = alloc,
