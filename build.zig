@@ -28,14 +28,11 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
     exe.root_module.addImport("mach-glfw", glfw_dep.module("mach-glfw"));
-    // @import("mach_glfw").link(glfw_dep.builder, exe);
 
-    // Same as above for our GL module,
-    // because we copied the GL code into the project
-    // we instead just create the module inline
     exe.root_module.addImport("gl", b.createModule(.{
         .root_source_file = b.path("libs/gl4v5.zig"),
     }));
+
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
     // step when running `zig build`).
@@ -79,4 +76,15 @@ pub fn build(b: *std.Build) !void {
     // running the unit tests.
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_unit_tests.step);
+
+    const docs_step = b.step("docs", "Emit docs");
+
+    const docs_install = b.addInstallDirectory(.{
+        .install_dir = .prefix,
+        .install_subdir = "docs",
+        .source_dir = exe.getEmittedDocs(),
+    });
+
+    docs_step.dependOn(&docs_install.step);
+    b.default_step.dependOn(docs_step);
 }

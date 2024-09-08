@@ -3,13 +3,16 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const file = @import("../file_loading/tga.zig");
 
-var count: c_uint = 0;
-
+// texture struct
 pub const Texture = struct {
     const Self = @This();
+    // the id of the texture
     texture_id: gl.GLuint,
+    // the spot of where this texture is in the id
     texture_spot: gl.GLenum,
 
+    // inits a given texture, currently only uses .tga files, i will be adding in
+    // .bmp soon too
     pub fn init(allocator: Allocator, filename: []const u8) !Self {
         var self = Self{
             .texture_id = undefined,
@@ -26,8 +29,8 @@ pub const Texture = struct {
         // DONT FOR GET TO CHANGES THESE BACK TO RGB WHEN USING OTHER DATATYPES
         const format: gl.GLenum = switch (data.header.bits_per_pixel) {
             1 * 8 => gl.R8,
-            3 * 8 => gl.BGR,
-            4 * 8 => gl.BGRA,
+            3 * 8 => gl.RGB,
+            4 * 8 => gl.RGBA,
             else => gl.R8,
         };
 
@@ -51,8 +54,9 @@ pub const Texture = struct {
         return self;
     }
 
+    // allows opengl to use the current texture
     pub fn useTexture(self: Self) void {
         gl.bindTexture(gl.TEXTURE_2D, self.texture_id);
-        gl.activeTexture(gl.TEXTURE0);
+        gl.activeTexture(self.texture_spot);
     }
 };
