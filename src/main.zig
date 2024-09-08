@@ -8,6 +8,8 @@ const glfw = @import("mach-glfw");
 const vec = @import("math/vec.zig");
 const obj = @import("objects/object.zig");
 const Random = @import("std").rand.Random;
+const PhysicsObject = @import("physics/physics_object.zig").PhysicsObject;
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -22,43 +24,7 @@ pub fn main() !void {
 
     app.programs.basic_program_texture = try basic.createBasicProgramWTexture(allocator);
     app.programs.basic_program_texture.camera = &app.camera;
-
-    app.programs.basic_program_texture.objects[0] = try app.obj_loader_service.load("objects/Crab.obj", .obj);
-    var plane = try app.obj_loader_service.load("objects/plane.obj", .obj);
-    plane.texture = tex.Texture.init(allocator, "textures/sky_box_.tga") catch null;
-    std.debug.print("plane\n", .{});
-    plane.pos = vec.init3(10.0, 2.0, 4.0);
-
-    var cube = try app.obj_loader_service.load("objects/cube.obj", .obj);
-    cube.texture = try tex.Texture.init(allocator, "textures/white.tga");
-    cube.scale = vec.init3(30000, 30000, 30000);
-
-    var crab = try app.obj_loader_service.load("objects/Crab.obj", .obj);
-    crab.texture = try tex.Texture.init(allocator, "textures/Crab_D.tga");
-
-    for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
-        var ject: obj.Object = undefined;
-
-        ject = crab;
-        ject.pos = vec.init3(
-            2 * @sin(@as(f32, @floatFromInt(dex))),
-            2 * @cos(@as(f32, @floatFromInt(dex))),
-            0,
-        );
-        app.programs.basic_program_texture.objects[dex] = ject;
-    }
-
-    app.programs.basic_program_texture.objects[0] = cube;
-    // if i want to overide back ground colours
-    app.programs.basic_program_texture.objects[0].?.colour = vec.init4(2, 2, 2, 1);
-    app.programs.basic_program_texture.objects[0].?.texture = try tex.Texture.init(allocator, "textures/sky_box_2.tga");
-
-    app.programs.basic_program_texture.objects[1] = cube;
-    app.programs.basic_program_texture.objects[1].?.scale = vec.init3(1, 1, 1);
-    app.programs.basic_program_texture.objects[1].?.colour = vec.init4(1, 0, 1, 1);
-    // app.programs.basic_program_texture.objects[1] = try app.obj_loader_service.load("objects/4V5T.obj", .obj);
-    // app.programs.basic_program_texture.objects[1].?.texture = tex.Texture.init(allocator, "textures/rgb.tga") catch null;
-    // app.programs.basic_program_texture.objects[1].?.colour = vec.init4(0.7, 0.7, 0.7, 1);
+    try init_objects(&app);
 
     std.debug.print("obj : {any}\n", .{app.programs.basic_program_texture.objects[0]});
 
@@ -78,6 +44,7 @@ pub fn main() !void {
     }) {
         app.input();
         app.render();
+        app.physics_thread.step(app.delta_time);
 
         // for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
         //     if (dex != 0) {
@@ -93,7 +60,83 @@ pub fn main() !void {
         if (b < 0) b_dir = 1;
         if (g > 1) g_dir = -1;
         if (g < 0) g_dir = 1;
+
+        if (app.window.window.getKey(glfw.Key.f) == glfw.Action.press) reset_objects(&app);
     }
 
     app.free();
+}
+
+pub fn init_objects(app: *BasicApp) !void {
+    app.programs.basic_program_texture.objects[0] = try app.obj_loader_service.load("objects/Crab.obj", .obj);
+    var plane = try app.obj_loader_service.load("objects/plane.obj", .obj);
+    plane.texture = tex.Texture.init(app.alloc, "textures/rgb.tga") catch null;
+    std.debug.print("plane\n", .{});
+    plane.pos = vec.init3(10.0, 2.0, 4.0);
+
+    var cube = try app.obj_loader_service.load("objects/cube.obj", .obj);
+    cube.texture = try tex.Texture.init(app.alloc, "textures/white.tga");
+    cube.scale = vec.init3(30000, 30000, 30000);
+
+    var crab = try app.obj_loader_service.load("objects/Crab.obj", .obj);
+    crab.texture = try tex.Texture.init(app.alloc, "textures/Crab_D.tga");
+
+    var index: usize = 3;
+    while (index < app.programs.basic_program_texture.objects.len) : (index += 1) {
+        var ject: obj.Object = undefined;
+
+        ject = crab;
+        ject.pos = vec.init3(
+            2 * @sin(@as(f32, @floatFromInt(index))),
+            2 * @cos(@as(f32, @floatFromInt(index))),
+            0,
+        );
+        app.programs.basic_program_texture.objects[index] = ject;
+
+        var phys_crab = PhysicsObject.init(&app.programs.basic_program_texture.objects[index].?, 12);
+        phys_crab.velocity = vec.init3(0, 2, 3);
+        try app.physics_thread.objects.append(phys_crab);
+    }
+
+    // for (app.programs.basic_program_texture.objects, 3..) |_, dex| {}
+
+    app.programs.basic_program_texture.objects[0] = cube;
+    // if i want to overide back ground colours
+    app.programs.basic_program_texture.objects[0].?.colour = vec.init4(2, 2, 2, 1);
+    app.programs.basic_program_texture.objects[0].?.texture = try tex.Texture.init(app.alloc, "textures/sky_box_2.tga");
+
+    // app.programs.basic_program_texture.objects[1] = cube;
+    // app.programs.basic_program_texture.objects[1].?.scale = vec.init3(1, 1, 1);
+    // app.programs.basic_program_texture.objects[1].?.colour = vec.init4(1, 0, 1, 1);
+    // app.programs.basic_program_texture.objects[1] = try app.obj_loader_service.load("objects/4V5T.obj", .obj);
+    // app.programs.basic_program_texture.objects[1].?.texture = tex.Texture.init(app.alloc, "textures/rgb.tga") catch null;
+    // app.programs.basic_program_texture.objects[1].?.colour = vec.init4(0.7, 0.7, 0.7, 1);
+    app.programs.basic_program_texture.objects[2] = plane;
+
+    app.programs.basic_program_texture.objects[3] = plane;
+    app.programs.basic_program_texture.objects[3].?.pos = vec.init3(14.0, 2.0, 4.0);
+    app.programs.basic_program_texture.objects[3].?.texture = try tex.Texture.init(app.alloc, "textures/sky_box_2.tga");
+
+    app.programs.basic_program_texture.objects[4] = plane;
+    app.programs.basic_program_texture.objects[4].?.pos = vec.init3(14.0, 2.0, 6.0);
+    app.programs.basic_program_texture.objects[4].?.texture = try tex.Texture.init(app.alloc, "textures/pink_smol.tga");
+}
+
+pub fn reset_objects(app: *BasicApp) void {
+    var index: usize = 3;
+    while (index < app.programs.basic_program_texture.objects.len) : (index += 1) {
+        app.programs.basic_program_texture.objects[index].?.updatePos(vec.init3(
+            2 * @sin(@as(f32, @floatFromInt(index))),
+            2 * @cos(@as(f32, @floatFromInt(index))),
+            0,
+        ));
+    }
+
+    for (app.physics_thread.objects.items, 0..) |_, i| {
+        app.physics_thread.objects.items[i].velocity = vec.init3(0, 9, 5);
+    }
+
+    app.programs.basic_program_texture.objects[2].?.pos = vec.init3(10.0, 2.0, 4.0);
+    app.programs.basic_program_texture.objects[3].?.pos = vec.init3(14.0, 2.0, 4.0);
+    app.programs.basic_program_texture.objects[4].?.pos = vec.init3(14.0, 2.0, 6.0);
 }
