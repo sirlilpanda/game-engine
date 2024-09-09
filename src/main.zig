@@ -35,6 +35,8 @@ pub fn main() !void {
     var crab = try app.obj_loader_service.load("objects/Crab.obj", .obj);
     crab.texture = try tex.Texture.init(allocator, "textures/Crab_D.tga");
 
+    var sphere = try app.obj_loader_service.load("objects/sphere.obj", .obj);
+    sphere.texture = try tex.Texture.init(allocator, "textures/Earth.bmp");
     for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
         var ject: obj.Object = undefined;
 
@@ -50,9 +52,8 @@ pub fn main() !void {
     app.programs.basic_program_texture.objects[0] = cube;
     // if i want to overide back ground colours
     app.programs.basic_program_texture.objects[0].?.colour = vec.init4(2, 2, 2, 1);
-    app.programs.basic_program_texture.objects[0].?.texture = try tex.Texture.init(allocator, "textures/Earth.bmp");
 
-    app.programs.basic_program_texture.objects[1] = cube;
+    app.programs.basic_program_texture.objects[1] = sphere;
     app.programs.basic_program_texture.objects[1].?.scale = vec.init3(1, 1, 1);
     app.programs.basic_program_texture.objects[1].?.colour = vec.init4(1, 0, 1, 1);
     // app.programs.basic_program_texture.objects[1] = try app.obj_loader_service.load("objects/4V5T.obj", .obj);
