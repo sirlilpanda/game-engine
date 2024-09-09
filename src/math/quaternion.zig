@@ -1,5 +1,5 @@
 // these are untested and is my next step
-const vec = @import("Vec.zig");
+const vec = @import("vec.zig");
 const mat = @import("matrix.zig");
 const math = @import("std").math;
 
@@ -34,6 +34,18 @@ pub const Quaternion = struct {
                 cr * cp * sy - sr * sp * cy,
             ),
         };
+    }
+
+    pub fn fromEular(angles: vec.Vec3) Self {
+        return Self.fromAngles(angles.x(), angles.y(), angles.z());
+    }
+
+    pub fn toEular(self: Self) vec.Vec3 {
+        return vec.init3(
+            self.getPitch(),
+            self.getYaw(),
+            self.getRoll(),
+        );
     }
 
     pub fn getPitch(self: Self) f32 {
@@ -116,7 +128,7 @@ pub const Quaternion = struct {
         const magna = self.q3.mag(); // as much as i trust the complier i want to make sure this
         // isnt calculated more than once
         // look good math always leads to bad looking code
-        return v.scale(self.q0 - magna * magna).add(v.dot(self.q3).scale(2)).add(vec.cross(self.q3, v).scale(2 * self.q0));
+        return v.scale(self.q0 * self.q0 - magna * magna).add(self.q3.scale(v.dot(self.q3) * (2))).add(vec.cross(self.q3, v).scale(2 * self.q0));
     }
 
     pub fn toMatrix3x3(q: Self) mat.Mat3x3 {
