@@ -6,8 +6,8 @@ pub const Header = packed struct {
     /// size in bytes
     file_size: u32,
     /// im going to abuse this
-    reserved: u32,
-    date_offset: u32,
+    reserved: u32 = 0,
+    data_offset: u32,
 };
 
 pub const InfoHeader = packed struct {
@@ -16,7 +16,7 @@ pub const InfoHeader = packed struct {
     width: i32,
     height: i32,
     /// number of plane? the fucks a plane
-    planes: u16,
+    planes: u16 = 1,
     /// 1 : The bitmap is monochrome, and the palette contains two entries. Each bit in the bitmap array represents a pixel. If the bit is clear, the pixel is displayed with the color of the first entry in the palette; if the bit is set, the pixel has the color of the second entry in the table.
     /// 4 : The bitmap has a maximum of 16 colors, and the palette contains up to 16 entries. Each pixel in the bitmap is represented by a 4-bit index into the palette. For example, if the first byte in the bitmap is 1Fh, the byte represents two pixels. The first pixel contains the color in the second palette entry, and the second pixel contains the color in the sixteenth palette entry.
     /// 8 : The bitmap has a maximum of 256 colors, and the palette contains up to 256 entries. In this case, each byte in the array represents a single pixel.
@@ -58,14 +58,38 @@ pub const Bmp = struct {
     const Self = @This();
     header: Header,
     infoheader: InfoHeader,
-    // colour_table: ?[]ColourTable = null,
     data: []u8,
 
-    // pub fn init() Self {
-    //     return Self{
-    //         Header
-    //     }
-    // }
+    pub fn init(width: i32, height: i32) Self {
+        return Self{
+            .header = Header{
+                .file_size = undefined,
+                .data_offset = @sizeOf(Header) + @sizeOf(InfoHeader),
+            },
+            .infoheader = InfoHeader{
+                .size = 0,
+                .width = width,
+                .height = height,
+                .bits_per_pixel = 24,
+                .compression = 0,
+                .image_size = 0,
+                .x_pixels_per_meter = 0,
+                .y_pixels_per_meter = 0,
+                .colours_used = 0,
+                .important_colors = 0,
+            },
+        };
+    }
+
+    fn updateHeaders(self: *Self) void {
+        self.header.file_size = self.data.len + self.header.data_offset;
+        self.infoheader.image_size = self.data.len;
+    }
+
+    pub fn updateData(self: *Self, data: []u8) void {
+        self.data = data;
+        updateHeaders(self);
+    }
 
     pub fn load(alloc: std.mem.Allocator, filename: []const u8) !Self {
         var bmp: Self = undefined;
@@ -109,9 +133,11 @@ pub const Bmp = struct {
     }
 
     pub fn save(self: Self, filename: []const u8) !void {
-        _ = self;
-        _ = filename;
-        @compileError("havent implement save on bmp yet");
+        const outfile = try std.fs.cwd().createFile(filename, .{ .truncate = true });
+        std.debug.print("len : {}\n", .{std.mem.toBytes(self.header).len});
+        _ = try outfile.write(&std.mem.toBytes(self.header));
+        _ = try outfile.write(&std.mem.toBytes(self.infoheader));
+        _ = try outfile.write(self.data);
     }
 };
 
@@ -123,8 +149,14 @@ test "load file bmp" {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
     const bmp = try Bmp.load(allocator, "textures/Earth.bmp");
+    std.debug.print("{any}\n", .{bmp.header});
+    std.debug.print("{any}\n", .{bmp.infoheader});
 
-    std.debug.print("{any}", .{bmp.infoheader});
+    try bmp.save("textures/earth_2.bmp");
+    // const bmp2 = try Bmp.load(allocator, "textures/earth_2.bmp");
 
+    // try std.testing.expect(std.mem.eql(u8, &std.mem.toBytes(bmp), &std.mem.toBytes(bmp2)));
+
+    // allocator.free(bmp.data);
     allocator.free(bmp.data);
 }
