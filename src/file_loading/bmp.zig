@@ -94,9 +94,17 @@ pub const Bmp = struct {
             std.process.exit(2);
         }
         const data_read = try raw_bmp_file.readAll(data);
+        if (@as(usize, bmp.infoheader.bits_per_pixel / 8) == 3) {
+            var idex: usize = 0;
+            while (idex < data.len - 3) : (idex += 3) {
+                std.mem.swap(u8, &data[idex], &data[idex + 1]);
+            }
+        }
+
         std.debug.print("amount read : {}\n", .{data_read});
         std.debug.print("amount size : {}\n", .{size});
         bmp.data = data;
+
         return bmp;
     }
 
