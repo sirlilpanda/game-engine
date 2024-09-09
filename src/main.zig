@@ -3,11 +3,10 @@ const basic = @import("app/basic_program.zig");
 const std = @import("std");
 const shader = @import("/opengl_wrappers/shader.zig");
 const tex = @import("opengl_wrappers/texture.zig");
-const gl = @import("gl");
-const glfw = @import("mach-glfw");
 const vec = @import("math/vec.zig");
 const obj = @import("objects/object.zig");
 const Random = @import("std").rand.Random;
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -30,12 +29,14 @@ pub fn main() !void {
     plane.pos = vec.init3(10.0, 2.0, 4.0);
 
     var cube = try app.obj_loader_service.load("objects/cube.obj", .obj);
-    cube.texture = try tex.Texture.init(allocator, "textures/white.tga");
+    cube.texture = try tex.Texture.init(allocator, "textures/sky_box_.tga");
     cube.scale = vec.init3(30000, 30000, 30000);
 
     var crab = try app.obj_loader_service.load("objects/Crab.obj", .obj);
     crab.texture = try tex.Texture.init(allocator, "textures/Crab_D.tga");
 
+    var sphere = try app.obj_loader_service.load("objects/sphere.obj", .obj);
+    sphere.texture = try tex.Texture.init(allocator, "textures/Earth.bmp");
     for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
         var ject: obj.Object = undefined;
 
@@ -51,9 +52,8 @@ pub fn main() !void {
     app.programs.basic_program_texture.objects[0] = cube;
     // if i want to overide back ground colours
     app.programs.basic_program_texture.objects[0].?.colour = vec.init4(2, 2, 2, 1);
-    app.programs.basic_program_texture.objects[0].?.texture = try tex.Texture.init(allocator, "textures/sky_box_2.tga");
 
-    app.programs.basic_program_texture.objects[1] = cube;
+    app.programs.basic_program_texture.objects[1] = sphere;
     app.programs.basic_program_texture.objects[1].?.scale = vec.init3(1, 1, 1);
     app.programs.basic_program_texture.objects[1].?.colour = vec.init4(1, 0, 1, 1);
     // app.programs.basic_program_texture.objects[1] = try app.obj_loader_service.load("objects/4V5T.obj", .obj);
