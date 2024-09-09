@@ -35,6 +35,7 @@ pub const ObjectService = struct {
 
     // ill change this to check the file extention later
     pub fn load(self: *Self, object_path: []const u8, obj_type: ObjectType) !obj.Object {
+        std.debug.print("trying to load : {s}\n", .{object_path});
         //this is a get or put but that func scares me
         if (self.cache.contains(object_path)) {
             return obj.Object{
