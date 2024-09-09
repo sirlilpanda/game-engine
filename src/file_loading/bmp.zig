@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub const Header = packed struct {
     // should just be BM
-    signature: u16 = 0x424d, // BM
+    signature: u16 = 0x4d42, // BM
     /// size in bytes
     file_size: u32,
     /// im going to abuse this
@@ -170,6 +170,7 @@ pub const Bmp = struct {
 
     pub fn save(self: Self, filename: []const u8) !void {
         const outfile = try std.fs.cwd().createFile(filename, .{ .truncate = true });
+        defer outfile.close();
         std.debug.print("len : {}\n", .{std.mem.toBytes(self.header).len});
         const outfile_writer = outfile.writer();
 
@@ -193,7 +194,7 @@ pub const Bmp = struct {
         if (@as(usize, self.infoheader.bits_per_pixel / 8) == 3) {
             var idex: usize = 0;
             while (idex < self.data.len - 3) : (idex += 3) {
-                std.mem.swap(u8, &self.data[idex], &self.data[idex + 1]);
+                std.mem.swap(u8, &self.data[idex], &self.data[idex + 2]);
             }
         }
 
@@ -214,12 +215,13 @@ test "load file bmp" {
     std.debug.print("changed\n", .{});
 
     try bmp.save("textures/earth_2.bmp");
-    const bmp2 = try Bmp.load(allocator, "textures/earth_2.bmp");
+    allocator.free(bmp.data);
 
-    // try std.testing.expect(std.mem.eql(u8, &std.mem.toBytes(bmp), &std.mem.toBytes(bmp2)));
+    const bmp2 = try Bmp.load(allocator, "textures/earth_2.bmp");
+    const bmp3 = try Bmp.load(allocator, "textures/Earth.bmp");
 
     allocator.free(bmp2.data);
-    allocator.free(bmp.data);
+    allocator.free(bmp3.data);
 }
 
 // i have no idea why this shit dont work
