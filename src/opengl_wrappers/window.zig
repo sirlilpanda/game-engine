@@ -104,7 +104,7 @@ pub const Window = struct {
             0,
             @as(gl.GLint, @intCast(size.width)),
             @as(gl.GLint, @intCast(size.height)),
-            gl.BGR,
+            gl.RGB,
             gl.UNSIGNED_BYTE,
             @as(gl.GLsizei, @intCast(rgb_data.len)),
             @ptrCast(&rgb_data[0]),
