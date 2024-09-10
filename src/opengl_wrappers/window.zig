@@ -3,7 +3,7 @@ const gl = @import("gl");
 const std = @import("std");
 
 const program = @import("program.zig");
-const file = @import("../file_loading/tga.zig");
+const Bmp = @import("../file_loading/bmp.zig").Bmp;
 const vec = @import("../math/vec.zig");
 /// Default GLFW error handling callback
 fn errorCallback(error_code: glfw.ErrorCode, description: [:0]const u8) void {
@@ -95,25 +95,27 @@ pub const Window = struct {
         const allocator = gpa.allocator();
 
         const size = self.window.getSize();
-
+        std.debug.print("size : {}\n", .{self.window.getSize()});
         var rgb_data = try allocator.alloc(u8, size.height * size.width * 3);
         defer allocator.free(rgb_data);
 
-        gl.readPixels(
+        gl.readnPixels(
             0,
             0,
             @as(gl.GLint, @intCast(size.width)),
             @as(gl.GLint, @intCast(size.height)),
-            gl.BGR,
+            gl.RGB,
             gl.UNSIGNED_BYTE,
+            @as(gl.GLsizei, @intCast(rgb_data.len)),
             @ptrCast(&rgb_data[0]),
         );
 
-        const outfile = file.Tga.init(
+        std.debug.print("faulted ?\n", .{});
+        var outfile = Bmp.init(
             @intCast(size.width),
             @intCast(size.height),
-            rgb_data,
         );
+        outfile.updateData(rgb_data);
 
         try outfile.save(name);
     }

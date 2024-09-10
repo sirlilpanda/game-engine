@@ -175,13 +175,17 @@ pub fn App(comptime Programs: type) type {
 
             self.camera.updateFps(dir);
 
-            // if (self.window.getKey(glfw.Key.p) == glfw.Action.up) ;
-            // if (screnshot and !pressed) {
-            //     try windor.saveImg("screenshot.tga");
-            //     pressed = true;
-            // } else if (!screnshot and pressed) {
-            //     pressed = false;
-            // }
+            // const screen_behavour = struct {
+            //     var pressed = false;
+            //     var screenshot = true;
+            // };
+
+            if (self.window.window.getKey(glfw.Key.p) == glfw.Action.press) {
+                std.debug.print("screenshot\n", .{});
+                self.window.saveImg("screenShot.bmp") catch |err| {
+                    std.debug.print("screenshot error : {any}\n", .{err});
+                };
+            }
 
             // return dir;
         }
