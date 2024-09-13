@@ -1,104 +1,12 @@
 const std = @import("std");
 const vec = @import("../math/vec.zig");
-
-/// colour type
-pub const Colour = struct {
-    const Self = @This();
-
-    r: u8,
-    g: u8,
-    b: u8,
-
-    /// inits the struct with a custom colour
-    pub fn custom(r: u8, g: u8, b: u8) Self {
-        return Self{ .r = r, .g = g, .b = b };
-    }
-
-    /// inits the struct with a red colour
-    pub fn red() Self {
-        return Self{ .r = 255, .g = 0, .b = 0 };
-    }
-
-    /// inits the struct with a orange colour
-    pub fn orange() Self {
-        return Self{ .r = 255, .g = 128, .b = 0 };
-    }
-
-    /// inits the struct with a yellow colour
-    pub fn yellow() Self {
-        return Self{ .r = 255, .g = 255, .b = 0 };
-    }
-
-    /// inits the struct with a lightGreen colour
-    pub fn lightGreen() Self {
-        return Self{ .r = 128, .g = 255, .b = 0 };
-    }
-
-    /// inits the struct with a green colour
-    pub fn green() Self {
-        return Self{ .r = 0, .g = 255, .b = 0 };
-    }
-
-    /// inits the struct with a cyan colour
-    pub fn cyan() Self {
-        return Self{ .r = 0, .g = 255, .b = 128 };
-    }
-
-    /// inits the struct with a lightBlue colour
-    pub fn lightBlue() Self {
-        return Self{ .r = 0, .g = 128, .b = 255 };
-    }
-
-    /// inits the struct with a blue colour
-    pub fn blue() Self {
-        return Self{ .r = 0, .g = 0, .b = 255 };
-    }
-
-    /// inits the struct with a darkPurple colour
-    pub fn darkPurple() Self {
-        return Self{ .r = 128, .g = 0, .b = 255 };
-    }
-
-    /// inits the struct with a purple colour
-    pub fn purple() Self {
-        return Self{ .r = 170, .g = 0, .b = 255 };
-    }
-
-    /// inits the struct with a pink colour
-    pub fn pink() Self {
-        return Self{ .r = 128, .g = 0, .b = 255 };
-    }
-
-    /// inits the struct with a magenta colour
-    pub fn magenta() Self {
-        return Self{ .r = 255, .g = 0, .b = 255 };
-    }
-
-    /// inits the struct with a black colour
-    pub fn black() Self {
-        return Self{ .r = 0, .g = 0, .b = 0 };
-    }
-
-    /// inits the struct with a white colour
-    pub fn white() Self {
-        return Self{ .r = 255, .g = 255, .b = 255 };
-    }
-
-    /// inits the struct with a grey colour
-    pub fn grey() Self {
-        return Self{ .r = 128, .g = 128, .b = 128 };
-    }
-
-    /// inits the struct with a greyScale colour
-    pub fn greyScale(scale: u8) Self {
-        // 255 max
-        return Self{ .r = scale, .g = scale, .b = scale };
-    }
-};
-
+const Colour = @import("../utils/colour.zig").Colour;
+/// allows coloured printing to std.debug / std error
 pub const ColourPrinter = struct {
     const Self = @This();
+    /// this is the colour behind the text
     colour_bg: Colour,
+    /// this is the colour of the text
     colour_fg: Colour,
 
     pub fn init() Self {
@@ -108,14 +16,17 @@ pub const ColourPrinter = struct {
         };
     }
 
+    /// sets the forground/text colour
     pub fn setFgColour(self: *Self, colour: Colour) void {
         self.colour_fg = colour;
     }
 
+    /// sets background colour
     pub fn setBgColour(self: *Self, colour: Colour) void {
         self.colour_bg = colour;
     }
 
+    /// prints a given string with the set colours
     pub fn print(self: Self, comptime format: []const u8, args: anytype) void {
         std.debug.print(
             "\x1B[38;2;{d};{d};{d}m\x1B[48;2;{d};{d};{d}m",
@@ -132,21 +43,26 @@ pub const ColourPrinter = struct {
         std.debug.print("\x1B[0m", .{});
     }
 
+    /// returns the cursor back to the home / 0, 0 pos on the terminal
     pub fn home(self: Self) void {
         _ = self;
         std.debug.print("\x1B[H", .{});
     }
 
+    /// hides the cussor on the termianl
     pub fn hideCursor(self: Self) void {
         _ = self;
         std.debug.print("\x1B[?25l", .{});
     }
 
+    /// clears the terminal
     pub fn clear(self: Self) void {
         _ = self;
         std.debug.print("\x1B[0J", .{});
     }
 
+    /// prints a vector 3 with differnt colours, make its easier to read
+    /// this will probaly be moved to vec3 though
     pub fn vec3(self: *Self, v: vec.Vec3) void {
         const old_fg = self.colour_fg;
 
