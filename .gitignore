@@ -1,6 +1,9 @@
 .zig-cache/
 zig-cache/
 zig-out/
+docs/
 ./objects/*
 *.exe
 *.tga
+// makes sure i dont commit my zig 0.13.0 wrapper scripts
+zig* 
