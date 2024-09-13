@@ -1,3 +1,4 @@
+//! this is a service for caching already loaded objects
 const std = @import("std");
 const render = @import("../opengl_wrappers/render.zig");
 const vec = @import("../math/vec.zig");
@@ -5,24 +6,29 @@ const obj = @import("object.zig");
 const file = @import("../file_loading/loadfile.zig");
 
 const Allocator = std.mem.Allocator;
-const renderCache = std.StringArrayHashMap(render.renderer);
+const renderCache = std.StringArrayHashMap(render.Renderer);
 
-//singletons are bad boo hoo
+/// singletons are bad boo hoo
 const maded: bool = false;
 
 const ObjectServiceError = error{
     singleton_already_created,
 };
-
+/// currnet support object types
 pub const ObjectType = enum {
     dat,
     obj,
 };
 
+/// service for loading and cachine objects
+/// a method to remove objects from the cache
+/// will be implmented later
 pub const ObjectService = struct {
     const Self = @This();
 
+    /// the cache
     cache: renderCache,
+    /// the allocator for loading the new objects
     allocator: Allocator,
 
     pub fn init(allocator: Allocator) ObjectServiceError!Self {
@@ -33,8 +39,9 @@ pub const ObjectService = struct {
         };
     }
 
-    // ill change this to check the file extention later
+    /// loads a new object, and wont open a file unless its not already in the cache
     pub fn load(self: *Self, object_path: []const u8, obj_type: ObjectType) !obj.Object {
+        // ill change this to check the file extention later
         std.debug.print("trying to load : {s}\n", .{object_path});
         //this is a get or put but that func scares me
         if (self.cache.contains(object_path)) {
@@ -46,7 +53,7 @@ pub const ObjectService = struct {
                 .texture = null,
             };
         } else {
-            var renderer = render.renderer.init();
+            var renderer = render.Renderer.init();
             const obj_file: file.ObjectFile = switch (obj_type) {
                 ObjectType.dat => try file.loadDatFile(self.allocator, object_path),
                 ObjectType.obj => try file.loadObjFile(self.allocator, object_path),
@@ -66,6 +73,7 @@ pub const ObjectService = struct {
         }
     }
 
+    /// frees all the memory
     pub fn deinit(self: *Self) void {
         for (self.cache.values()) |renderer| {
             renderer.destroy();
