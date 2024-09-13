@@ -1,3 +1,5 @@
+//! camera type
+
 const vec = @import("../math/vec.zig");
 const mat = @import("../math/matrix.zig");
 const std = @import("std");
@@ -7,24 +9,32 @@ const program = @import("program.zig");
 const CDR: f32 = std.math.pi / 180.0;
 
 const default_look_at = vec.Vec3.number(1);
+/// the approximate up vector
 const default_up = vec.init3(0, 1, 0);
 
-// inline fn clip()
-
+/// an abstraction on a camera type
 pub const Camera = struct {
     const Self = @This();
     pitch: f32,
     yaw: f32,
     fov: f32,
     aspect: f32,
+    /// the near cliping field
     znear: f32,
+    /// the far cliping field
     zfar: f32,
+    /// the cameras position
     eye: vec.Vec3,
+    /// where the camera is looking at
     look_at_point: vec.Vec3,
+    /// the up right vector
     up: vec.Vec3,
+    /// the projection matrix
     projection_matrix: mat.Mat4x4,
+    /// the view matrix
     view_matrix: mat.Mat4x4,
 
+    /// creates a new camera
     pub fn init(fov: f32, aspect: f32, znear: f32, zfar: f32, eye: vec.Vec3) Self {
         return Self{
             .pitch = 0,
@@ -56,11 +66,12 @@ pub const Camera = struct {
         return val;
     }
 
+    /// updates the camera as if it was an fps camera
+    ///  the direction is the desired direction of travel of the eye relitve to the eye and look at point
+    ///  so the x compoent of direction is how far you want to move forward/back
+    ///  y : up/down
+    ///  z : right/left
     pub fn updateFps(self: *Self, direction: vec.Vec3) void {
-        //  the direction is the desired direction of travel of the eye relitve to the eye and look at point
-        //  so the x compoent of direction is how far you want to move forward/back
-        //  y : up/down
-        //  z : right/left
         self.pitch = clip(-89.99, 89.99, self.pitch);
 
         self.eye.vec[0] += direction.vec[0] * @sin(self.yaw * CDR) - direction.vec[2] * @cos(self.yaw * CDR);

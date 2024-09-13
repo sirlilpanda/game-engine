@@ -3,14 +3,16 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const Image = @import("../file_loading/image.zig").Image;
 
-// texture struct
+/// texture struct, where the texture is store in the gpu
+/// only supports 2d textures, still needs a free
 pub const Texture = struct {
     const Self = @This();
-    // the id of the texture
+    /// the id of the texture
     texture_id: gl.GLuint,
-    // the spot of where this texture is in the id
+    /// the spot of where this texture is in the id
     texture_spot: gl.GLenum,
 
+    /// creates a new texture form the file
     pub fn init(allocator: Allocator, filename: []const u8) !Self {
         var self = Self{
             .texture_id = undefined,
@@ -51,7 +53,7 @@ pub const Texture = struct {
         return self;
     }
 
-    // allows opengl to use the current texture
+    /// allows opengl to use the current texture
     pub fn useTexture(self: Self) void {
         gl.bindTexture(gl.TEXTURE_2D, self.texture_id);
         gl.activeTexture(self.texture_spot);

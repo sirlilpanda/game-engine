@@ -4,15 +4,27 @@ const std = @import("std");
 
 const Allocator = std.mem.Allocator;
 
-pub const renderer = struct {
+/// this should be name 3d renderer
+/// this store all the buffer data locations for
+/// 3d objects, i will be changing this to a union
+/// in the future to allow for differnt buffers
+/// arrangements to be used
+pub const Renderer = struct {
     const Self = @This();
+    /// the id of the array object
     vertex_array_object: gl.GLuint,
+    /// the vertex data
     vertex_buffer_object: gl.GLuint,
+    /// the vertex normal data
     vertex_normal_object: gl.GLuint, //might remove later
+    /// this vertex texture data
     vertex_texture_object: gl.GLuint,
+    /// the face index data
     vertex_index_object: gl.GLuint,
+    /// the number of elements, i.e. the length of the arrays
     number_elements: usize,
 
+    /// creates a new render with buffer loactions on the gpu
     pub fn init() Self {
         var self = Self{
             .vertex_array_object = undefined,
@@ -38,6 +50,7 @@ pub const renderer = struct {
         return self;
     }
 
+    /// loads a new objectFile in to the gpu
     pub fn loadFile(self: *Self, dat: file.ObjectFile) !void {
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
         gl.namedBufferData(
@@ -87,6 +100,7 @@ pub const renderer = struct {
         gl.bindVertexArray(self.vertex_array_object);
     }
 
+    /// destroies all the buffers on the gpu
     pub fn destroy(self: Self) void {
         gl.deleteVertexArrays(1, &self.vertex_array_object);
         gl.deleteBuffers(1, &self.vertex_buffer_object);
@@ -94,6 +108,7 @@ pub const renderer = struct {
         gl.deleteBuffers(1, &self.vertex_index_object);
     }
 
+    /// renders the object
     pub fn render(self: Self) void {
         gl.bindVertexArray(self.vertex_array_object);
         gl.drawElements(

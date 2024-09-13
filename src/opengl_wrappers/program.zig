@@ -5,27 +5,36 @@ const uniform = @import("uniform.zig");
 const cam = @import("camera.zig");
 const obj = @import("../objects/object.zig");
 const meta = @import("meta_wrapper.zig");
-const example_uniform = @import("program_uniform.zig").example_uniform;
+const ExampleUniform = @import("program_uniform.zig").ExampleUniform;
 const Allocator = std.mem.Allocator;
 
 const AMOUNT_OF_SHADERS = 8;
-// you will fuck up your computer if you make this too big
-// might do an array list in the future
+
+/// an abstraction on an opengl program
+/// and example of the uniform type can be found in program_unifrom.zig
+/// the amount of objects is just how many objects that the program will render
+/// i will more then likely change that to an array list
 pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type {
+    // checks that the given uniform has the same functions as the ExampleUniform
     if (comptime !meta.interfaceCheck(
         unifrom_type,
-        example_uniform,
+        ExampleUniform,
     )) @compileError("uniform type doesnt have correct traits");
     return struct {
         const Self = @This();
-
+        /// the id of the program
         program_id: gl.GLuint,
+        /// the shaders of the program
         shaders: [AMOUNT_OF_SHADERS]?shader.Shader, //does this really need to be dynamic
         shader_index: u8,
+        /// the uniforms of the program
         uniforms: unifrom_type,
+        /// the camera that the program uses for rendering
         camera: *cam.Camera,
+        /// the objects that the program renders
         objects: [amount_of_object]?obj.Object,
 
+        /// creates a new opengl program
         pub fn init() Self {
             return Self{
                 .program_id = gl.createProgram(),
@@ -37,6 +46,7 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
             };
         }
 
+        /// links the unifroms for program, this happens during the link function
         fn linkUniforms(self: *Self) void {
             var new_uni: unifrom_type = unifrom_type{};
             // this pretty much acts as a comptime hashmap
@@ -48,6 +58,7 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
             self.uniforms = new_uni;
         }
 
+        /// add a vert and fragment shader
         pub fn add_vert_n_frag(self: *Self, allocator: Allocator, vert_path: []const u8, frag_path: []const u8) !void {
             const vert = try shader.Shader.init(
                 allocator,
@@ -64,6 +75,7 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
             self.load_shader(frag);
         }
 
+        /// attaches the given shader to the program
         pub fn load_shader(self: *Self, s: shader.Shader) void {
             self.shaders[self.shader_index] = s;
             self.shader_index += 1;
@@ -72,16 +84,19 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
             gl.attachShader(self.program_id, s.id);
         }
 
+        /// add a given uniform to the program
         pub fn addUniform(self: Self, uni: *uniform.Uniform) void {
             const loc = gl.getUniformLocation(self.program_id, @ptrCast(uni.name));
             uni.addLocation(loc);
         }
 
+        /// links the program and the uniforms
         pub fn link(self: *Self) void {
             gl.linkProgram(self.program_id);
             self.linkUniforms();
         }
 
+        /// reloads the program shaders
         pub fn reload(self: *Self) !void {
             var prog = Self{
                 .program_id = gl.createProgram(),
@@ -116,10 +131,12 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
         }
 
         // this was done so i can swap programs
+        /// sets this program as the one to be used by opengl
         pub fn use(self: Self) void {
             gl.useProgram(self.program_id);
         }
 
+        /// unloads the program and all its shaders
         pub fn unload(self: Self) void {
             for (self.shaders) |s| {
                 if (s) |sha| sha.unload();
@@ -127,17 +144,20 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
             gl.deleteProgram(self.program_id);
         }
 
+        /// renders all objects
         pub fn renderAll(self: Self) void {
             for (self.objects) |object| {
                 if (object) |o| self.uniforms.draw(self.camera, o);
             }
         }
 
+        /// only renders the object at the given index
         pub fn renderAtIndex(self: Self, index: u32) void {
             if (self.objects[index]) |object| self.uniforms.draw(self.camera, object);
         }
 
         // supprising very useful for skyboxes
+        /// renders all objects but one at the given index
         pub fn renderAllButAtIndex(self: Self, index: u32) void {
             for (self.objects, 0..) |object, i| {
                 if (object != null and i != index) {
