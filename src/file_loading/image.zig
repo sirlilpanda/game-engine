@@ -22,7 +22,7 @@ pub const Image = struct {
             const tga = try Tga.load(alloc, filename);
             return Self{
                 .height = tga.header.height,
-                .width = tga.header.wdith,
+                .width = tga.header.width,
                 .data = tga.data,
                 .bits_per_pixel = tga.header.bits_per_pixel,
             };
