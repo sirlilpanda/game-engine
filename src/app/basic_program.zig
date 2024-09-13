@@ -8,6 +8,9 @@ const shader = @import("../opengl_wrappers/shader.zig");
 
 const std = @import("std");
 
+/// this is a very basic program that sends the
+/// model view matrix, the model view projection matrix
+/// the nomral matrix and a light position
 pub const BasicUniforms = struct {
     const Self = @This();
     mvMatrixUniform: uni.Uniform = uni.Uniform.init("mvMatrix"),
@@ -32,13 +35,19 @@ pub const BasicUniforms = struct {
         // self.lgtUniform.sendVec4(vec.init4(camera.eye.vec[0], camera.eye.vec[1], camera.eye.vec[2], 0));
         object.draw();
     }
+
     pub fn reload(self: Self) void {
         _ = self;
     }
 };
 
+/// basic program that uses basic uniforms
 pub const BasicProgram = program.Program(BasicUniforms);
 
+/// this is a very basic program that sends the
+/// model view matrix, the model view projection matrix
+/// the nomral matrix, a light position, a object colour
+/// and texture sampler
 pub const BasicUniformsText = struct {
     const Self = @This();
     hasDiffuseLighting: uni.Uniform = uni.Uniform.init("hasDiffuseLighting"),
@@ -77,6 +86,7 @@ pub const BasicUniformsText = struct {
         object.draw();
     }
 
+    /// reloads the some of the defualt values
     pub fn reload(self: Self) void {
         self.hasDiffuseLighting.send1Uint(0);
         self.ambient_colour.sendVec4(vec.init4(0.2, 0.2, 0.2, 1));
@@ -92,14 +102,15 @@ pub const BasicUniformsText = struct {
 
 pub const BasicProgramTex = program.Program(BasicUniformsText, 32);
 
+/// init function for the BasicProgramTex program, i keep it here to show how to nicely init new programs
 pub fn createBasicProgramWTexture(allocator: std.mem.Allocator) !BasicProgramTex {
     var prog = BasicProgramTex.init();
 
     const vert = try shader.Shader.init(allocator, "shaders/crab.vert", .vertex);
     const frag = try shader.Shader.init(allocator, "shaders/crab.frag", .frag);
     std.debug.print("\n\nLoaded\n", .{});
-    prog.load_shader(vert);
-    prog.load_shader(frag);
+    prog.loadShader(vert);
+    prog.loadShader(frag);
     prog.link();
     prog.use();
 
