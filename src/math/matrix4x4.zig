@@ -2,6 +2,8 @@
 //! however this dont work with the more generic matrixes
 const vect = @import("vec.zig");
 const std = @import("std");
+const ColourPrinter = @import("../console_logger/coloured_text.zig").ColourPrinter;
+const Colour = @import("../utils/colour.zig").Colour;
 
 // this is more optimised but dosent work with the slower more general purpose matrix
 pub const Mat4x4 = struct {
@@ -177,6 +179,7 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = rotation_matrix };
     }
 
+    /// creates the x rotaion matrix
     pub fn rotate_x(angle: f32) Self {
         const c = @cos(angle);
         const s = @sin(angle);
@@ -189,6 +192,7 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = rotation_matrix };
     }
 
+    /// creates the y rotaion matrix
     pub fn rotate_y(angle: f32) Self {
         const c = @cos(angle);
         const s = @sin(angle);
@@ -201,6 +205,7 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = rotation_matrix };
     }
 
+    /// creates the z rotaion matrix
     pub fn rotate_z(angle: f32) Self {
         const c = @cos(angle);
         const s = @sin(angle);
@@ -213,6 +218,7 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = rotation_matrix };
     }
 
+    /// creates the the translation matrix
     pub fn translate(location: vect.Vec3) Self {
         const translation_matrix = @Vector(16, f32){
             1,               0,               0,               0,
@@ -223,6 +229,7 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = translation_matrix };
     }
 
+    /// creates the the scale matrix
     pub fn scale(s: vect.Vec3) Self {
         const scale_matrix = @Vector(16, f32){
             s.vec[0], 0,        0,        0,
@@ -233,8 +240,9 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = scale_matrix };
     }
 
-    //god i love simd vectors
+    /// computes the inverse transpose of the matrix
     pub fn inverseTranspose(mat: Self) Self {
+        //god i love simd vectors
         //https://github.com/g-truc/glm/blob/586a402397dd35d66d7a079049856d1e2cbab300/glm/gtc/matrix_inverse.inl#L66
         // im scared
         const ones = @Vector(2, f32){ -1, 1 };
@@ -306,16 +314,20 @@ pub const Mat4x4 = struct {
         return Self{ .vec = inverse };
     }
 
-    pub fn debug_print_matrix(mat: Self) void {
+    pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+        _ = fmt;
+        _ = options;
         var i: usize = 0;
         var j: usize = 0;
-        std.debug.print("mat :\n", .{});
+        var colour_text = ColourPrinter.init();
+        try writer.print("mat :\n", .{});
         while (j < 4) : (j += 1) {
-            std.debug.print("|", .{});
+            try writer.print("|", .{});
             while (i < 4) : (i += 1) {
-                std.debug.print("{d:.6}, ", .{mat.vec[i + j * 4]});
+                colour_text.setFgColour(Colour.usizeToColour(i + j * 4));
+                try writer.print("{start}{d:.6}{end}, ", .{ colour_text, self.vec[i + j * 4], colour_text });
             }
-            std.debug.print("|\n", .{});
+            try writer.print("|\n", .{});
             i = 0;
         }
     }

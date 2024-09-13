@@ -1,6 +1,9 @@
 //! optimised 3x3 matrix using SIMD instructions
+//! however this dont work with the more generic matrixes
 const vect = @import("vec.zig");
 const std = @import("std");
+const ColourPrinter = @import("../console_logger/coloured_text.zig").ColourPrinter;
+const Colour = @import("../utils/colour.zig").Colour;
 
 pub const Mat3x3 = struct {
     const Self = @This();
@@ -89,17 +92,20 @@ pub const Mat3x3 = struct {
         return vect.init3(temp1, temp2, temp3);
     }
 
-    /// prints the given matrix, this will be removed in the future
-    pub fn debug_print_matrix(mat: Self) void {
+    pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+        _ = fmt;
+        _ = options;
         var i: usize = 0;
         var j: usize = 0;
-        std.debug.print("mat :\n", .{});
+        var colour_text = ColourPrinter.init();
+        try writer.print("mat :\n", .{});
         while (j < 3) : (j += 1) {
-            std.debug.print("|", .{});
+            try writer.print("|", .{});
             while (i < 3) : (i += 1) {
-                std.debug.print("{}, ", .{mat.vec[i + j * 3]});
+                colour_text.setFgColour(Colour.usizeToColour(i + j * 3));
+                try writer.print("{start}{d:.6}{end}, ", .{ colour_text, self.vec[i + j * 3], colour_text });
             }
-            std.debug.print("|\n", .{});
+            try writer.print("|\n", .{});
             i = 0;
         }
     }

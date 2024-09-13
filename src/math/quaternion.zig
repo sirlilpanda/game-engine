@@ -2,6 +2,8 @@
 const vec = @import("vec.zig");
 const mat = @import("matrix.zig");
 const math = @import("std").math;
+const ColourPrinter = @import("../console_logger/coloured_text.zig").ColourPrinter;
+const Colour = @import("../utils/colour.zig").Colour;
 
 /// Quaternion type
 pub const Quaternion = struct {
@@ -58,7 +60,7 @@ pub const Quaternion = struct {
         // pitch (y-axis rotation)
         const sinp: f32 = @sqrt(1.0 + 2.0 * (self.q0 * self.q3.y() - self.q3.x() * self.q3.z()));
         const cosp: f32 = @sqrt(1.0 - 2.0 * (self.q0 * self.q3.y() - self.q3.x() * self.q3.z()));
-        return 2.0 * math.atan2(f32, sinp, cosp) - math.pi / 2.0;
+        return 2.0 * math.atan2(sinp, cosp) - math.pi / 2.0;
     }
 
     /// get the yaw of the Quaternion
@@ -66,7 +68,7 @@ pub const Quaternion = struct {
         // yaw (z-axis rotation)
         const siny_cosp: f32 = 2.0 * (self.q0 * self.q3.z() + self.q3.x() * self.q3.y());
         const cosy_cosp: f32 = 1.0 - 2.0 * (self.q3.y() * self.q3.y() + self.q3.z() * self.q3.z());
-        return math.atan2(f32, siny_cosp, cosy_cosp);
+        return math.atan2(siny_cosp, cosy_cosp);
     }
 
     /// get the roll of the Quaternion
@@ -74,7 +76,7 @@ pub const Quaternion = struct {
         // roll (x-axis rotation)
         const sinr_cosp: f32 = 2.0 * (self.q0 * self.q3.x() + self.q3.y() * self.q3.z());
         const cosr_cosp: f32 = 1.0 - 2.0 * (self.q3.x() * self.q3.x() + self.q3.y() * self.q3.y());
-        return math.atan2(f32, sinr_cosp, cosr_cosp);
+        return math.atan2(sinr_cosp, cosr_cosp);
     }
 
     /// multiplies 2 Quaternion together
@@ -185,10 +187,18 @@ pub const Quaternion = struct {
     pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
+        var colour_text = ColourPrinter.init();
+        colour_text.setFgColour(Colour.red());
+        try writer.print("Quat[{start}{}{end}, ", .{ colour_text, self.q0, colour_text });
 
-        try writer.print("[{}, {}, {}, {}]", .{
-            self.q0, self.q3.x(), self.q3.y(), self.q3.z(),
-        });
+        colour_text.setFgColour(Colour.yellow());
+        try writer.print("{start}{}{end}, ", .{ colour_text, self.q3.x(), colour_text });
+
+        colour_text.setFgColour(Colour.green());
+        try writer.print("{start}{}{end}, ", .{ colour_text, self.q3.y(), colour_text });
+
+        colour_text.setFgColour(Colour.lightBlue());
+        try writer.print("{start}{}{end}]", .{ colour_text, self.q3.z(), colour_text });
     }
 };
 
