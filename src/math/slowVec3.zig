@@ -1,7 +1,11 @@
+//! slow vector 3 type
+//! this is also a generic type
+
 const VecError = error{
     invalidVec,
 };
 
+/// given type must either be a vector or number thing
 pub fn Vec3(comptime T: type) type {
     return packed struct {
         const Self = @This();
@@ -9,14 +13,17 @@ pub fn Vec3(comptime T: type) type {
         y: T,
         z: T,
 
+        /// creates new vector
         pub fn init(x: T, y: T, z: T) Self {
             return Self{ .x = x, .y = y, .z = z };
         }
 
+        /// creates a vector filled with a number
         pub fn number(num: T) Self {
             return Self{ .x = num, .y = num, .z = num };
         }
 
+        /// returns the max value
         pub fn max(a: Self) T {
             if ((a.x >= a.z) and (a.x > a.y)) return a.x;
             if ((a.z >= a.x) and (a.z > a.y)) return a.z;
@@ -24,6 +31,7 @@ pub fn Vec3(comptime T: type) type {
             return a.z;
         }
 
+        /// returns the mins value
         pub fn min(a: Self) T {
             if ((a.x <= a.z) and (a.x <= a.y)) return a.x;
             if ((a.z <= a.x) and (a.z <= a.y)) return a.z;
@@ -31,23 +39,28 @@ pub fn Vec3(comptime T: type) type {
             return a.x;
         }
 
+        /// computes the dot product
         pub fn dot(a: Self, b: Self) T {
             return a.x * b.x + a.y * b.y + a.z * b.z;
         }
 
+        /// computes the sum of all values
         pub fn sum(a: Self) T {
             return a.x + a.y + a.z;
         }
 
+        /// computes the length of the vector
         pub fn len(a: Self) T {
             return @sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
         }
 
+        /// computes the norm of the vector
         pub fn norm(a: Self) Self {
             const den: T = len(a);
             return a.scale(1 / den);
         }
 
+        /// adds 2 vectors
         pub fn add(a: Self, b: Self) Self {
             return Self{
                 .x = a.x + b.x,
@@ -56,6 +69,7 @@ pub fn Vec3(comptime T: type) type {
             };
         }
 
+        /// subs 2 vectors
         pub fn sub(a: Self, b: Self) Self {
             return Self{
                 .x = a.x - b.x,
@@ -64,6 +78,7 @@ pub fn Vec3(comptime T: type) type {
             };
         }
 
+        /// computes componet wise multiplactions
         pub fn mul(a: Self, b: Self) Self {
             return Self{
                 .x = a.x * b.x,
@@ -72,6 +87,7 @@ pub fn Vec3(comptime T: type) type {
             };
         }
 
+        /// computes componet wise division
         pub fn div(a: Self, b: Self) Self {
             return Self{
                 .x = a.x / b.x,
@@ -80,6 +96,7 @@ pub fn Vec3(comptime T: type) type {
             };
         }
 
+        /// scales a vector by the given value
         pub fn scale(a: Self, b: T) Self {
             return Self{
                 .x = a.x * b,
@@ -88,6 +105,7 @@ pub fn Vec3(comptime T: type) type {
             };
         }
 
+        /// computes the cross product
         pub fn cross(a: Self, b: Self) Self {
             return Self{
                 .x = a.y * b.z - a.z * b.y,
@@ -96,6 +114,7 @@ pub fn Vec3(comptime T: type) type {
             };
         }
 
+        /// checks if both vectors are equal
         pub fn eq(a: Self, b: Self) bool {
             return if (a.x == b.x and
                 a.y == b.y and
@@ -103,12 +122,12 @@ pub fn Vec3(comptime T: type) type {
         }
 
         // https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
-
+        /// computes the reflected vector
         pub fn reflect(a: Self, b: Self) Self {
             const cosI = -a.dot(b);
             return b.add(a.scale(2 * cosI));
         }
-
+        /// computes the refacted vector
         pub fn refract(a: Self, b: Self, n1: T, n2: T) VecError!Self {
             const n = n1 / n2;
             const cosI = -a.dot(b);
@@ -118,7 +137,8 @@ pub fn Vec3(comptime T: type) type {
             return b.scale(n).add(a.scale(n * (cosI - cosT)));
         }
 
-        // used for water or some shit, if its further away then its more refective or something like that
+        /// computes the reflectance value
+        /// used for water or some shit, if its further away then its more refective or something like that
         pub fn reflectance(a: Self, b: Self, n1: T, n2: T) T {
             const n = n1 / n2;
             const cosI = -a.dot(b);

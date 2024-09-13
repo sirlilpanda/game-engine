@@ -1,26 +1,29 @@
+//! SIMD optimised vector, can be of any length
 pub const VecError = error{
     VecLengthNot3,
 };
 
+// vector types
 pub const Vec2 = Vec(2);
 pub const Vec3 = Vec(3);
 pub const Vec4 = Vec(4);
 
-//tested
+/// creates new vec2
 pub fn init2(x: f32, y: f32) Vec2 {
     return Vec2{ .vec = @Vector(2, f32){ x, y } };
 }
 
-//tested
+/// creates new vec3
 pub fn init3(x: f32, y: f32, z: f32) Vec3 {
     return Vec3{ .vec = @Vector(3, f32){ x, y, z } };
 }
 
-//tested
+/// creates new vec4
 pub fn init4(x: f32, y: f32, z: f32, w: f32) Vec4 {
     return Vec4{ .vec = @Vector(4, f32){ x, y, z, w } };
 }
 
+/// computes the cross products of 2 vec3s
 pub fn cross(a: Vec3, b: Vec3) Vec3 {
     const V3 = @Vector(3, f32);
 
@@ -34,122 +37,132 @@ pub fn cross(a: Vec3, b: Vec3) Vec3 {
     const temp4: V3 = @shuffle(f32, b.vec, undefined, mask1);
     const temp34: V3 = temp3 * temp4;
     return Vec3{ .vec = temp12 - temp34 };
-
-    // return Self{
-    //     .vec[0] = a.vec[1] * b.vec[2] - a.vec[2] * b.vec[1],
-    //     .vec[1] = a.vec[2] * b.vec[0] - a.vec[0] * b.vec[2],
-    //     .vec[2] = a.vec[0] * b.vec[1] - a.vec[1] * b.vec[0],
-    // };
 }
 
+/// creates a new vector type with a given length
 pub fn Vec(comptime length: comptime_int) type {
     return struct {
         const Self = @This();
         vec: @Vector(length, f32),
 
+        /// returns the x value
         pub inline fn x(self: Self) f32 {
             return self.vec[0];
         }
 
+        /// returns the y value
         pub inline fn y(self: Self) f32 {
+            // these need to do some comp time checking to ensure index 1 exists
             return self.vec[1];
         }
 
+        /// returns the z value
         pub inline fn z(self: Self) f32 {
+            // these need to do some comp time checking to ensure index 2 exists
             return self.vec[2];
         }
 
+        /// returns the w value
         pub inline fn w(self: Self) f32 {
+            // these need to do some comp time checking to ensure index 3 exists
             return self.vec[3];
         }
 
+        /// sets the x value of the given vector
         pub inline fn set_x(self: *Self, val: f32) void {
             self.vec[0] = val;
         }
 
+        /// sets the y value of the given vector
         pub inline fn set_y(self: *Self, val: f32) void {
             self.vec[1] = val;
         }
 
+        /// sets the z value of the given vector
         pub inline fn set_z(self: *Self, val: f32) void {
             self.vec[2] = val;
         }
 
+        /// sets the w value of the given vector
         pub inline fn set_w(self: *Self, val: f32) void {
             self.vec[3] = val;
         }
 
-        //tested
+        /// creates new vector filled with zeros
         pub fn zeros() Self {
             return comptime number(0);
         }
 
-        //tested
+        /// creates new vector filled with ones
         pub fn ones() Self {
             return comptime number(1);
         }
 
-        //tested
+        /// creates new vector filled with the given number
         pub fn number(scalar: f32) Self {
             return Self{ .vec = @splat(scalar) };
         }
 
+        /// adds 2 vectors
         pub fn add(a: Self, b: Self) Self {
             return Self{ .vec = a.vec + b.vec };
         }
 
+        /// sub 2 vectors
         pub fn sub(a: Self, b: Self) Self {
             return Self{ .vec = a.vec - b.vec };
         }
 
+        /// computes componet wise multiplactions
         pub fn mul(a: Self, b: Self) Self {
             return Self{ .vec = a.vec * b.vec };
         }
 
+        /// computes componet wise division
         pub fn div(a: Self, b: Self) Self {
             return Self{ .vec = a.vec / b.vec };
         }
 
-        //tested
+        /// returns the max value
         pub fn max(a: Self) f32 {
             return @reduce(.Max, a.vec);
         }
 
-        //tested
+        /// returns the mins value
         pub fn min(a: Self) f32 {
             return @reduce(.Min, a.vec);
         }
 
-        //tested
+        /// computes the dot product
         pub fn dot(a: Self, b: Self) f32 {
             return @reduce(.Add, a.vec * b.vec);
         }
 
-        //tested
+        /// computes the dot product
         pub fn sum(a: Self) f32 {
             return @reduce(.Add, a.vec);
         }
 
-        //tested
+        // computes the magnatude of the vector
         pub fn mag(a: Self) f32 {
             return @sqrt(@reduce(.Add, a.vec * a.vec));
         }
 
-        //tested
-        //need further optimised
+        /// returns the normalized vector
         pub fn norm(a: Self) Self {
+            //need further optimised
             return Self{ .vec = a.vec / number(a.mag()).vec };
             // const den: f32 = len(a);
             // return a.scale(1 / den);
         }
 
-        //tested
-        //need further optimised
+        /// scales the vector by the given number
         pub fn scale(a: Self, b: f32) Self {
             return Self{ .vec = a.vec * number(b).vec };
         }
 
-        //tested
+        /// tests is 2 vectors are equal
+        /// this may get the value wrong however its fast
         pub fn eq(a: Self, b: Self) bool {
             return if (@reduce(.Add, a.vec - b.vec) == 0) return true else false;
         }

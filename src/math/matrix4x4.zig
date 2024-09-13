@@ -1,3 +1,5 @@
+//! optimised 4x4 matrix using SIMD instructions
+//! however this dont work with the more generic matrixes
 const vect = @import("vec.zig");
 const std = @import("std");
 
@@ -6,10 +8,12 @@ pub const Mat4x4 = struct {
     const Self = @This();
     vec: @Vector(16, f32),
 
+    /// creates a new matrix filled with zeros
     pub fn init() Self {
         return Self{ .vec = @splat(0) };
     }
 
+    /// returns a 4x4 idenity matrix
     pub fn idenity() Self {
         var temp = init();
         temp.vec[0] = 1;
@@ -19,10 +23,12 @@ pub const Mat4x4 = struct {
         return temp;
     }
 
+    /// creates matrix from an array of values
     pub fn makeFromArray(arr: [16]f32) Self {
         return Self{ .vec = arr };
     }
 
+    /// computes the transpose of the matrix
     pub fn t(mat: Self) Self {
         const mask = @Vector(16, i32){
             0, 4, 8,  12,
@@ -33,8 +39,9 @@ pub const Mat4x4 = struct {
         return Self{ .vec = @shuffle(f32, mat.vec, undefined, mask) };
     }
 
-    //this shit is magic
+    /// multiplies 2 4x4 matrixes
     pub fn mul(mat: Self, mat2: Self) Self {
+        //this shit is magic
         const mask1 = @Vector(64, i32){
             0,  0,  0,  0,
             1,  1,  1,  1,
@@ -88,6 +95,7 @@ pub const Mat4x4 = struct {
         return Self{ .vec = temp1 + temp2 + temp3 + temp4 };
     }
 
+    /// multiply with a vec4
     pub fn MulVec(mat: Self, vec: vect.Vec4) vect.Vec4 {
         const mask1 = @Vector(16, i32){
             0, 1, 2, 3,
@@ -116,6 +124,7 @@ pub const Mat4x4 = struct {
         );
     }
 
+    /// computes the look at point matrix
     pub fn lookAt(eye: vect.Vec3, center: vect.Vec3, approx_up: vect.Vec3) Self {
         const forward: vect.Vec3 = (vect.Vec3{ .vec = center.vec - eye.vec }).norm();
         const side: vect.Vec3 = vect.cross(forward, approx_up).norm();
@@ -134,6 +143,7 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = v };
     }
 
+    /// computes the perspective matrix, might change this to the inf perspective matrix later
     pub fn perspective(fovy: f32, aspect: f32, zNear: f32, zFar: f32) Self {
         //https://www.youtube.com/watch?v=U0_ONQQ5ZNM&t=177s
         //https://github.com/g-truc/glm/blob/0.9.5/glm/gtc/matrix_transform.inl#L208
@@ -147,8 +157,9 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = v };
     }
 
-    //needs optimised for simd
+    /// creates a rotaion matrix form the given eular angles
     pub fn rotate(angle: f32, v: vect.Vec3) Self {
+        //needs optimised for simd
         // https://github.com/g-truc/glm/blob/0.9.5/glm/gtc/matrix_transform.inl#L48
         const c = @cos(angle);
         const s = @sin(angle);

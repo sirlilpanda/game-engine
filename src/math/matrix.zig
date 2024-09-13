@@ -1,4 +1,6 @@
-//
+//! very generic matrix type, if you want a faster matrix please use the
+//! Mat4x4, and Mat3x3 for a faster version
+//! honestly this whole thing needs a rewrite i will be commenting it after
 //   0 0 2 3 .. n
 // 0 a b c d
 // 1 e f g h

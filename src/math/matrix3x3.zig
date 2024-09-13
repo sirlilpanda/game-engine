@@ -1,14 +1,18 @@
+//! optimised 3x3 matrix using SIMD instructions
 const vect = @import("vec.zig");
 const std = @import("std");
 
 pub const Mat3x3 = struct {
     const Self = @This();
+    /// the data
     vec: @Vector(9, f32),
 
+    /// inits a new matrix filled with zeros
     pub fn init() Self {
         return Self{ .vec = @splat(0) };
     }
 
+    /// create a new idenity matrix
     pub fn idenity() Self {
         var temp = init();
         temp.vec[0] = 1;
@@ -17,15 +21,18 @@ pub const Mat3x3 = struct {
         return temp;
     }
 
+    /// creates an matrix form an array
     pub fn makeFromArray(arr: [9]f32) Self {
         return Self{ .vec = arr };
     }
 
+    /// transpose of the given matrix
     pub fn t(mat: Self) Self {
         const mask = @Vector(9, i32){ 0, 3, 6, 1, 4, 7, 2, 5, 8 };
         return Self{ .vec = @shuffle(f32, mat.vec, undefined, mask) };
     }
 
+    /// multiplies 2 3x3 matrixes together
     pub fn mul(mat: Self, mat2: Self) Self {
         const mask1 = @Vector(27, i32){
             0, 0, 0,
@@ -54,13 +61,14 @@ pub const Mat3x3 = struct {
         const mask5 = @Vector(9, i32){ 6, 7, 8, 15, 16, 17, 24, 25, 26 };
         const v1 = @shuffle(f32, mat.vec, undefined, mask1);
         const v2 = @shuffle(f32, mat2.vec, undefined, mask2);
-        const v3 = v1 * v2;
+        const v3 = v1 * v2; // all the dot product muls step
         const temp1 = @shuffle(f32, v3, undefined, mask3);
         const temp2 = @shuffle(f32, v3, undefined, mask4);
         const temp3 = @shuffle(f32, v3, undefined, mask5);
         return Self{ .vec = temp1 + temp2 + temp3 };
     }
 
+    /// multiplies the matrix with the given vector
     pub fn MulVec(mat: Self, vec: vect.Vec3) vect.Vec3 {
         const mask1 = @Vector(9, i32){
             0, 1, 2,
@@ -81,6 +89,7 @@ pub const Mat3x3 = struct {
         return vect.init3(temp1, temp2, temp3);
     }
 
+    /// prints the given matrix, this will be removed in the future
     pub fn debug_print_matrix(mat: Self) void {
         var i: usize = 0;
         var j: usize = 0;
