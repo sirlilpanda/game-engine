@@ -4,3 +4,4 @@
 - [ ] i have to come up with a better name for this game engine
 - [ ] physics might be fun (yes i do like suffering)
 - [ ] textures need a caching system
+- [ ] 2d rendering
