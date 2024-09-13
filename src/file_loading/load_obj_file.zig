@@ -12,6 +12,7 @@ const parsing_error = error{
     malformed_line,
 };
 
+/// differnt types of wavefront object file tokens
 const token = enum {
     comment,
     vertex,
@@ -28,6 +29,7 @@ const FaceElements = struct {
     normal_indexes: ?[3]u32,
 };
 
+/// returns the token type of the given line
 inline fn getTokenType(line: []const u8) ?token {
     if (mem.startsWith(u8, line, "# ")) return .comment;
     if (mem.startsWith(u8, line, "v ")) return .vertex;
@@ -39,7 +41,8 @@ inline fn getTokenType(line: []const u8) ?token {
     return null;
 }
 
-// only works for 3d models as 2d models arent real and cant hurt me
+/// parses the face data of the .obj file, will assume that face data is at the bottom of the file
+/// only works for 3d models as 2d models arent real and cant hurt me
 inline fn parseFaceData(line: []const u8) !FaceElements {
     const number_of_slashes = mem.count(u8, line, "/");
     const number_of_elements = mem.count(u8, line, " ");
@@ -149,6 +152,7 @@ inline fn parseFaceData(line: []const u8) !FaceElements {
     return faceelement;
 }
 
+/// loads the given object file
 pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile {
     const e_file = std.fs.cwd().openFile(filename, .{});
     var buffer: [256]u8 = undefined;

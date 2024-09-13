@@ -4,6 +4,8 @@ const Allocator = std.mem.Allocator;
 const mem = std.mem;
 const file = @import("loadfile.zig");
 
+/// i believe this is a custom data format file that is used within this book https://books.google.com.br/books/about/Computer_graphics_for_Java_programmers.html?id=vY5RAAAAMAAJ&redir_esc=y
+/// it like an expanded .obj file
 pub fn loadDatFile(allocator: Allocator, filename: []const u8) !file.ObjectFile {
     const buffer = try allocator.alloc(u8, 200);
     defer allocator.free(buffer);
