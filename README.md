@@ -31,6 +31,7 @@ currently the project has 4 main directories:
 - Blinn–Phong lighting
 - texture rendering
 - screenshots
+- coloured printing to the terimal, makes its easier to read matrixs and vectors
 
 ## the engine also supports more advance fetures such as:
 - allowing multiple opengl programs
