@@ -4,7 +4,7 @@ const std = @import("std");
 const uniform = @import("uniform.zig");
 const cam = @import("camera.zig");
 const obj = @import("../objects/object.zig");
-const meta = @import("meta_wrapper.zig");
+const meta = @import("../utils/meta_wrapper.zig");
 const ExampleUniform = @import("program_uniform.zig").ExampleUniform;
 const Allocator = std.mem.Allocator;
 
