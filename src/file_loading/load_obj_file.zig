@@ -276,3 +276,5 @@ test "load_obj_file" {
 
     d.unload();
 }
+
+// god i need to write tests for this

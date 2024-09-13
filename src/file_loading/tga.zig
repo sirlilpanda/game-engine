@@ -1,6 +1,12 @@
+//! i implement this as its the simplest data format that exists
+//! i believe there are errors in here due to the packet struct
+//! i will be fixing this, however i will continue to use
+//! bmp file over this
+//! https://docs.fileformat.com/image/tga/
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
+/// header of tga file
 const Header = packed struct {
     id_length: u8, //
     colour_map_type: u8, //
@@ -20,9 +26,12 @@ pub const TgaFileError = error{
 
 pub const Tga = struct {
     const Self = @This();
+    /// header
     header: Header,
+    /// image data
     data: []u8,
 
+    /// creates a new tga image
     pub fn init(width: u16, height: u16, data: []u8) Self {
         return Self{
             .header = Header{
@@ -41,10 +50,12 @@ pub const Tga = struct {
         };
     }
 
+    /// updates the data o fthe tga image
     pub fn updateData(self: Self, data: []u8) void {
         self.data = data;
     }
 
+    /// loads a new tga image
     pub fn load(allocator: Allocator, filename: []const u8) !Self {
         const current_dir = std.fs.cwd();
         var buffer: [256]u8 = undefined;
@@ -61,7 +72,7 @@ pub const Tga = struct {
         const data = try allocator.alloc(u8, amount);
         _ = try obj_file.readAll(data);
         std.debug.print("amount : {}\n", .{amount});
-        // honestly i have no clue why i have to do this
+        // i believe the packet struct size is wrong at it over writes some image data
         std.mem.reverse(u8, data);
         std.debug.print("reversed\n", .{});
 
@@ -83,6 +94,7 @@ pub const Tga = struct {
         };
     }
 
+    /// save the given tga file to the with the name
     pub fn save(self: Self, name: []const u8) !void {
         const outfile = try std.fs.cwd().createFile(name, .{ .truncate = true });
         std.debug.print("len : {}\n", .{std.mem.toBytes(self.header).len});

@@ -1,5 +1,8 @@
+//! the file format can be found here https://www.ece.ualberta.ca/~elliott/ee552/studentAppNotes/2003_w/misc/bmp_file_format/bmp_file_format.htm
+//! this current implemention does not support colour tables, but does have the option to add them
 const std = @import("std");
 
+/// the header of the BMP, mainly just holds file data
 pub const Header = packed struct {
     // should just be BM
     signature: u16 = 0x4d42, // BM
@@ -18,6 +21,7 @@ pub const Header = packed struct {
     }
 };
 
+/// the info header of the bmp, hold data about the image itself
 pub const InfoHeader = packed struct {
     // size of the info header = 40
     size: u32,
@@ -78,12 +82,17 @@ pub const ColourTable = struct {
     reserved: u8,
 };
 
+/// bmp struct
 pub const Bmp = struct {
     const Self = @This();
+    /// the header
     header: Header,
+    /// the infoheader
     infoheader: InfoHeader,
+    ///  the image data
     data: []u8,
 
+    /// creates a new bmp struct
     pub fn init(width: i32, height: i32) Self {
         return Self{
             .header = Header{
@@ -107,16 +116,19 @@ pub const Bmp = struct {
         };
     }
 
+    /// updates the data within the header when new data is given
     fn updateHeaders(self: *Self) void {
         self.header.file_size = @as(u32, @intCast(self.data.len)) + self.header.data_offset;
         self.infoheader.image_size = @as(u32, @intCast(self.data.len));
     }
 
+    /// sets new image data and updates the info header
     pub fn updateData(self: *Self, data: []u8) void {
         self.data = data;
         updateHeaders(self);
     }
 
+    /// loads a new bmp file from disk
     pub fn load(alloc: std.mem.Allocator, filename: []const u8) !Self {
         var bmp: Self = Bmp.init(0, 0);
 
@@ -134,6 +146,7 @@ pub const Bmp = struct {
         // std.debug.print("pos {any} : byte {X}\n", .{ rbf_reader.context.getPos(), try rbf_reader.readByte() });
         const info_header = try rbf_reader.readBytesNoEof(42);
 
+        // i cant use read struct since the packing the struct doesnt work due to aligment
         bmp.header = Header.arrayToHeader(header);
         std.debug.print("header = {any}\n", .{bmp.header});
 
@@ -168,6 +181,8 @@ pub const Bmp = struct {
         return bmp;
     }
 
+    /// save the bmp file
+    /// filename needs the .bmp extention
     pub fn save(self: Self, filename: []const u8) !void {
         const outfile = try std.fs.cwd().createFile(filename, .{ .truncate = true });
         defer outfile.close();
@@ -223,26 +238,3 @@ test "load file bmp" {
     allocator.free(bmp2.data);
     allocator.free(bmp3.data);
 }
-
-// i have no idea why this shit dont work
-// // bmp.header = try rbf_reader.readStruct(Header);
-// bmp.header.signature = try rbf_reader.readInt(@TypeOf(bmp.header.signature), std.builtin.Endian.little);
-// bmp.header.file_size = try rbf_reader.readInt(@TypeOf(bmp.header.file_size), std.builtin.Endian.little);
-// try rbf_reader.skipBytes(4, .{ .buf_size = 4 });
-// // try rbf_reader.context.seekBy(4);
-// bmp.header.data_offset = try rbf_reader.readInt(@TypeOf(bmp.header.data_offset), std.builtin.Endian.little);
-// std.debug.print("offset {any} \n", .{rbf_reader.context.getPos()});
-// // these work
-// bmp.infoheader.size = try rbf_reader.readInt(@TypeOf(bmp.infoheader.size), std.builtin.Endian.little);
-// bmp.infoheader.width = try rbf_reader.readInt(@TypeOf(bmp.infoheader.width), std.builtin.Endian.little);
-// bmp.infoheader.height = try rbf_reader.readInt(@TypeOf(bmp.infoheader.height), std.builtin.Endian.little);
-// _ = try rbf_reader.readByte();
-
-// // bmp.infoheader.planes = try raw_bmp_file.reader().readInt(@TypeOf(bmp.infoheader.planes), std.builtin.Endian.little);
-// bmp.infoheader.bits_per_pixel = try rbf_reader.readInt(@TypeOf(bmp.infoheader.bits_per_pixel), std.builtin.Endian.little);
-// bmp.infoheader.compression = try rbf_reader.readInt(@TypeOf(bmp.infoheader.compression), std.builtin.Endian.little);
-// bmp.infoheader.image_size = try rbf_reader.readInt(@TypeOf(bmp.infoheader.image_size), std.builtin.Endian.little);
-// bmp.infoheader.x_pixels_per_meter = try rbf_reader.readInt(@TypeOf(bmp.infoheader.x_pixels_per_meter), std.builtin.Endian.little);
-// bmp.infoheader.y_pixels_per_meter = try rbf_reader.readInt(@TypeOf(bmp.infoheader.y_pixels_per_meter), std.builtin.Endian.little);
-// bmp.infoheader.colours_used = try rbf_reader.readInt(@TypeOf(bmp.infoheader.colours_used), std.builtin.Endian.little);
-// bmp.infoheader.important_colors = try rbf_reader.readInt(@TypeOf(bmp.infoheader.important_colors), std.builtin.Endian.little);
