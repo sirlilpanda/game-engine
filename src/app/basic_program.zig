@@ -32,6 +32,9 @@ pub const BasicUniforms = struct {
         // self.lgtUniform.sendVec4(vec.init4(camera.eye.vec[0], camera.eye.vec[1], camera.eye.vec[2], 0));
         object.draw();
     }
+    pub fn reload(self: Self) void {
+        _ = self;
+    }
 };
 
 pub const BasicProgram = program.Program(BasicUniforms);

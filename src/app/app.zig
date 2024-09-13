@@ -26,20 +26,34 @@ const prog_error = error{
 };
 var speed: f32 = 10;
 
+/// the App is where everything lives the GLFW window, the opengl programs
+/// the camera, an allocator, etc. basically this is the final abstraction
+/// layer
 pub fn App(comptime Programs: type) type {
     return struct {
         const Self = @This();
 
+        /// window size for the low pass filter
         const win_size = 256;
+        /// a moving average filter to slow low pass the high freqs
         fps_low_pass_window: @Vector(win_size, f32) = @splat(0),
+        /// the current index of where the window is
         fps_low_pass_window_index: u8 = 0,
+        /// the main window
         window: Window,
+        /// the struct of where are the opengl programs is stored
         programs: Programs,
+        /// a list of physics objects currently not implemented
         physic_objects: std.ArrayList(*obj.Object),
+        /// a service for loading and caching objects good flyweight pattern
         obj_loader_service: obj_loader.ObjectService,
+        /// due to alot of the opengl programs using the same camera one can be stored here
         camera: cam.Camera,
-        alloc: Allocator, // just incase you want a global alloc
+        /// a global GPA allocator in case you need it
+        alloc: Allocator,
+        /// the time differnce between the last shouldStop call, since this should be directly related to frame rate
         delta_time: f32,
+        // the timer for getting the delta time
         timer: time.Timer,
 
         // [TODO] work out how to write this
@@ -48,6 +62,7 @@ pub fn App(comptime Programs: type) type {
         //     }
         // }
 
+        /// creates a new window with the given screen width and height
         pub fn init(screen_width: u32, screen_hight: u32, alloc: Allocator, programs: Programs) !Self {
             var self = Self{
                 .window = undefined,
@@ -78,10 +93,12 @@ pub fn App(comptime Programs: type) type {
             return self;
         }
 
+        /// gets the current fps
         pub fn fps(self: Self) f32 {
             return @reduce(.Add, self.fps_low_pass_window);
         }
 
+        /// to check if the current window should be closed
         pub fn shouldStop(self: *Self) bool {
             self.delta_time = @as(f32, @floatFromInt(self.timer.lap())) * 0.000000001;
             self.fps_low_pass_window[self.fps_low_pass_window_index] = (1 / (self.delta_time)) / win_size;
@@ -89,7 +106,7 @@ pub fn App(comptime Programs: type) type {
             return self.window.shouldClose();
         }
 
-        // program name must be what you called it with the struct you passed into the app
+        /// program name must be what you called it with the struct you passed into the app
         pub fn change_program(self: Self, program_name: []const u8) !void {
             inline for (std.meta.fields(Programs)) |f| {
                 if (wrapper.trait_check(f.type, "use")) {
@@ -100,6 +117,7 @@ pub fn App(comptime Programs: type) type {
             }
         }
 
+        /// renders all objects that are attached to all programs
         pub fn render(self: Self) void {
             gl.clear(gl.DEPTH_BUFFER_BIT);
 
@@ -122,6 +140,8 @@ pub fn App(comptime Programs: type) type {
             // gl.flush();
         }
 
+        /// gets the current and updates the camera, also handles screenshots, and program reloading
+        /// this will be replaced in the future with some form of input struct, following the command pattern
         pub fn input(self: *Self) void {
             // std.debug.print("delta time {}\n", .{self.delta_time});
             glfw.pollEvents();
@@ -155,11 +175,12 @@ pub fn App(comptime Programs: type) type {
                 // std.debug.print("left_control : pressed\n", .{});
                 dir.set_y(-speed * self.delta_time);
             }
-            std.debug.print("dir", .{});
             if (self.window.window.getKey(glfw.Key.minus) == glfw.Action.press)
                 speed += 1;
             if (self.window.window.getKey(glfw.Key.equal) == glfw.Action.press)
                 speed -= 1;
+
+            self.camera.updateFps(dir);
 
             if (self.window.window.getKey(glfw.Key.r) == glfw.Action.press) {
                 inline for (std.meta.fields(Programs)) |f| {
@@ -173,43 +194,30 @@ pub fn App(comptime Programs: type) type {
                 self.window.window.setShouldClose(true);
             }
 
-            self.camera.updateFps(dir);
-
-            // const screen_behavour = struct {
-            //     var pressed = false;
-            //     var screenshot = true;
-            // };
-
             if (self.window.window.getKey(glfw.Key.p) == glfw.Action.press) {
                 std.debug.print("screenshot\n", .{});
                 self.window.saveImg("screenShot.bmp") catch |err| {
                     std.debug.print("screenshot error : {any}\n", .{err});
                 };
             }
-
-            // return dir;
         }
 
-        // current program
-        // camera
-        // render_thread
-        // physics_thread
-        // loader
-        // alloc
-
+        /// frees all the programs and unloads other services
         pub fn free(self: *Self) void {
-            self.window.deinit();
             inline for (std.meta.fields(Programs)) |f| {
                 @field(self.programs, f.name).unload();
             }
+            self.window.deinit();
             self.obj_loader_service.deinit();
         }
     };
 }
 
+///
 pub const BasicPrograms = struct {
     basic_program_texture: basic.BasicProgramTex,
     // basic_program: basic.BasicProgram,
 };
 
+///
 pub const BasicApp = App(BasicPrograms);
