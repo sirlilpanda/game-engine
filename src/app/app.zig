@@ -7,7 +7,7 @@ const time = std.time;
 const Tuple = std.meta.Tuple;
 const Allocator = std.mem.Allocator;
 
-const wrapper = @import("../opengl_wrappers/meta_wrapper.zig");
+const wrapper = @import("../utils/meta_wrapper.zig");
 const shader = @import("../opengl_wrappers/shader.zig");
 const program = @import("../opengl_wrappers/program.zig");
 const render = @import("../opengl_wrappers/render.zig");
@@ -33,7 +33,7 @@ pub fn App(comptime Programs: type) type {
     return struct {
         const Self = @This();
 
-        /// window size for the low pass filter
+        /// window size for the low pass filter, its 256 since this allows a u8 to roll over
         const win_size = 256;
         /// a moving average filter to slow low pass the high freqs
         fps_low_pass_window: @Vector(win_size, f32) = @splat(0),
@@ -213,11 +213,13 @@ pub fn App(comptime Programs: type) type {
     };
 }
 
-///
+/// struct for basic progams, this only only contains
+/// the basicProgramTex type which supports phong lighting
+/// and texture
 pub const BasicPrograms = struct {
     basic_program_texture: basic.BasicProgramTex,
     // basic_program: basic.BasicProgram,
 };
 
-///
+/// the type of a basic app that uses the BasicProgramTex program
 pub const BasicApp = App(BasicPrograms);
