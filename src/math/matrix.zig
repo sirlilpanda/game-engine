@@ -12,6 +12,10 @@
 
 const vect = @import("vec.zig");
 const std = @import("std");
+
+const ColourPrinter = @import("../console_logger/coloured_text.zig").ColourPrinter;
+const Colour = @import("../utils/colour.zig").Colour;
+
 pub const Mat4x4 = @import("matrix4x4.zig").Mat4x4;
 pub const Mat3x3 = @import("matrix3x3.zig").Mat3x3;
 
@@ -48,16 +52,20 @@ pub fn Matrix(comptime hight: comptime_int, comptime length: comptime_int) type 
             return temp;
         }
 
-        pub fn debug_print_matrix(mat: Self) void {
+        pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
+            _ = fmt;
+            _ = options;
             var i: usize = 0;
             var j: usize = 0;
-            std.debug.print("mat :\n", .{});
+            var colour_text = ColourPrinter.init();
+            try writer.print("mat :\n", .{});
             while (j < m) : (j += 1) {
-                std.debug.print("|", .{});
+                colour_text.setFgColour(Colour.usizeToColour(i + j * n));
+                try writer.print("|", .{});
                 while (i < n) : (i += 1) {
-                    std.debug.print("{}, ", .{mat.vec[i + j * n]});
+                    try writer.print("{start}{}{end}, ", .{ colour_text, self.vec[i + j * n], colour_text });
                 }
-                std.debug.print("|\n", .{});
+                try writer.print("|\n", .{});
                 i = 0;
             }
         }
