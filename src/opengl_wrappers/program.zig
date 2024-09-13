@@ -71,12 +71,12 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
                 gl.FRAGMENT_SHADER,
             );
 
-            self.load_shader(vert);
-            self.load_shader(frag);
+            self.loadShader(vert);
+            self.loadShader(frag);
         }
 
         /// attaches the given shader to the program
-        pub fn load_shader(self: *Self, s: shader.Shader) void {
+        pub fn loadShader(self: *Self, s: shader.Shader) void {
             self.shaders[self.shader_index] = s;
             self.shader_index += 1;
             // std.debug.print("shaders : {}\n", .{s});
@@ -115,7 +115,7 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
                         prog.unload();
                         return shader.ShaderErrors.failed_to_compile;
                     }
-                    prog.load_shader(try shad);
+                    prog.loadShader(try shad);
                 }
             }
             self.unload();
