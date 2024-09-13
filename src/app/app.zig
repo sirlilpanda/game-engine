@@ -107,7 +107,7 @@ pub fn App(comptime Programs: type) type {
         }
 
         /// program name must be what you called it with the struct you passed into the app
-        pub fn change_program(self: Self, program_name: []const u8) !void {
+        pub fn changeProgram(self: Self, program_name: []const u8) !void {
             inline for (std.meta.fields(Programs)) |f| {
                 if (wrapper.trait_check(f.type, "use")) {
                     @field(self.programs, program_name).use();
