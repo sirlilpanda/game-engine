@@ -1,6 +1,6 @@
 ngl the structure of this project is based off vibes
 # game-engine
-game engine written in zig, this was made from scratch using a glfw window and opengl, all math and other file loading was programed myself. before you ask yes i am insane. so what makes this game engine differnt from the other, well let me tell you this game engine is shit. However i do use zig features for some cool features within this game engine such as complie time known uniforms and programs, since these should be known at complie time.
+game engine written in zig, this was made from scratch using a glfw window and opengl, all math and other file loading was programed myself. before you ask yes i am insane. so what makes this game engine differnt from the other, well let me tell you this game engine is shit, but pretty fast. Although in all honesty, i do use zig features for some cool features within this game engine such as complie time known uniforms and programs, since these should be known at complie time.
 
 ![image form the game engine](screenshot.png)
 
@@ -12,7 +12,7 @@ warning i dont think i free everthing correctly yet so your gpu memory may start
 currently the project has 4 main directories:
 - `src` : this is where the code is stored
     - `app` : where the abstraction of the app is stored as well as a basic program
-    - `console_logger` : an simple console logger that allows for coloured texture and changing the cursor pos (only works with ture colour terminals)
+    - `console_logger` : an simple console logger that allows for coloured texture and changing the cursor pos (only works with true colour terminals)
     - `file_loading` : all the file loading code such as bmp and wavefront object files
     - `math` : where the math is like matrixes and vectors
     - `objects` : 3d game objects and a loading service for them
