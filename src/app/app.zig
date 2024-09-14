@@ -8,6 +8,7 @@ const Tuple = std.meta.Tuple;
 const Allocator = std.mem.Allocator;
 
 const wrapper = @import("../utils/meta_wrapper.zig");
+const TimeStamp = @import("../utils/time_stamp.zig").TimeStamp;
 const shader = @import("../opengl_wrappers/shader.zig");
 const program = @import("../opengl_wrappers/program.zig");
 const render = @import("../opengl_wrappers/render.zig");
@@ -53,7 +54,7 @@ pub fn App(comptime Programs: type) type {
         alloc: Allocator,
         /// the time differnce between the last shouldStop call, since this should be directly related to frame rate
         delta_time: f32,
-        // the timer for getting the delta time
+        /// the timer for getting the delta time
         timer: time.Timer,
 
         // [TODO] work out how to write this
@@ -195,10 +196,19 @@ pub fn App(comptime Programs: type) type {
             }
 
             if (self.window.window.getKey(glfw.Key.p) == glfw.Action.press) {
-                std.debug.print("screenshot\n", .{});
-                self.window.saveImg("screenShot.bmp") catch |err| {
-                    std.debug.print("screenshot error : {any}\n", .{err});
-                };
+                const now = TimeStamp.current();
+
+                const filename = std.fmt.allocPrint(self.alloc, "screen_shot-{name}.bmp", .{now}) catch "";
+                defer self.alloc.free(filename);
+                if (std.fs.cwd().access(filename, .{}) == std.fs.Dir.AccessError.FileNotFound) {
+                    std.debug.print("name : {s}\n", .{filename});
+                    std.debug.print("screenshot\n", .{});
+                    self.window.saveImg(filename) catch |err| {
+                        std.debug.print("screenshot error : {any}\n", .{err});
+                    };
+                } else {
+                    std.debug.print("file {s} already exists\n", .{filename});
+                }
             }
         }
 
