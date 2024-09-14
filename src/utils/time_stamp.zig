@@ -12,6 +12,7 @@ pub const TimeStamp = struct {
     month: u64,
     year: u64,
 
+    /// gets the current time
     pub fn current() Self {
         const current_time: u64 = @abs(time.timestamp());
         return fromTime(current_time);
@@ -52,6 +53,7 @@ pub const TimeStamp = struct {
         }
     }
 
+    /// creates a new time_stamp form a unix epoch time, doesnt support going backwards though
     pub fn fromTime(time_stamp: u64) Self {
         var temp_time_stamp: u64 = time_stamp;
         var year: u64 = 1970;
