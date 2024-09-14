@@ -134,9 +134,8 @@ pub const Bmp = struct {
 
         const current_dir = std.fs.cwd();
         var buffer: [256]u8 = undefined;
-        std.debug.print("reserved = {}\n", .{bmp.header.reserved});
 
-        std.debug.print("std.fs.cwd : {s}\n", .{try current_dir.realpath(filename, &buffer)});
+        std.debug.print("[INFO] loading file at : {s}\n", .{try current_dir.realpath(filename, &buffer)});
         const raw_bmp_file: std.fs.File = try current_dir.openFile(filename, .{});
         defer raw_bmp_file.close();
         const rbf_reader = raw_bmp_file.reader();
@@ -148,25 +147,25 @@ pub const Bmp = struct {
 
         // i cant use read struct since the packing the struct doesnt work due to aligment
         bmp.header = Header.arrayToHeader(header);
-        std.debug.print("header = {any}\n", .{bmp.header});
+        // std.debug.print("header = {any}\n", .{bmp.header});
 
         bmp.infoheader = InfoHeader.arrayToInfoheader(info_header);
-        std.debug.print("infoheader = {any}\n", .{bmp.infoheader});
+        // std.debug.print("infoheader = {any}\n", .{bmp.infoheader});
 
         const size: usize =
             @as(usize, @intCast(bmp.infoheader.width)) *
             @as(usize, @intCast(bmp.infoheader.height)) *
             @as(usize, bmp.infoheader.bits_per_pixel / 8);
 
-        std.debug.print("width : {}\n", .{@as(usize, @intCast(bmp.infoheader.width))});
-        std.debug.print("height : {}\n", .{@as(usize, @intCast(bmp.infoheader.height))});
+        // std.debug.print("[INFO] BMP width : {}\n", .{@as(usize, @intCast(bmp.infoheader.width))});
+        // std.debug.print("[INFO] BMP height : {}\n", .{@as(usize, @intCast(bmp.infoheader.height))});
 
         const data = try alloc.alloc(u8, size);
         if (bmp.infoheader.bits_per_pixel < 8) {
-            std.debug.print("i cant be fucked supporting bits per pixel less than 8\n", .{});
+            std.debug.print("[ERROR] i cant be fucked supporting bits per pixel less than 8\n", .{});
             std.process.exit(2);
         }
-        const data_read = try raw_bmp_file.readAll(data);
+        _ = try raw_bmp_file.readAll(data);
         if (@as(usize, bmp.infoheader.bits_per_pixel / 8) == 3) {
             var idex: usize = 0;
             while (idex < data.len - 3) : (idex += 3) {
@@ -174,8 +173,8 @@ pub const Bmp = struct {
             }
         }
 
-        std.debug.print("amount read : {}\n", .{data_read});
-        std.debug.print("amount size : {}\n", .{size});
+        // std.debug.print("amount read : {}\n", .{data_read});
+        // std.debug.print("amount size : {}\n", .{size});
         bmp.data = data;
 
         return bmp;
@@ -184,9 +183,12 @@ pub const Bmp = struct {
     /// save the bmp file
     /// filename needs the .bmp extention
     pub fn save(self: Self, filename: []const u8) !void {
-        const outfile = try std.fs.cwd().createFile(filename, .{ .truncate = true });
+        const outfile = std.fs.cwd().createFile(filename, .{ .truncate = true }) catch |err| {
+            std.debug.print("[ERROR] {any}\n", .{err});
+            return err;
+        };
+
         defer outfile.close();
-        std.debug.print("len : {}\n", .{std.mem.toBytes(self.header).len});
         const outfile_writer = outfile.writer();
 
         _ = try outfile_writer.writeInt(@TypeOf(self.header.signature), self.header.signature, std.builtin.Endian.little);

@@ -27,9 +27,10 @@ pub const Window = struct {
 
     /// creates a new opengl window, with the given height and width
     pub fn init(width: u32, height: u32) !Self {
+        std.debug.print("[INFO] attempting to create window with width : {} and height : {}\n", .{ width, height });
         glfw.setErrorCallback(errorCallback);
         if (!glfw.init(.{})) {
-            std.log.err("failed to initialize GLFW: {?s}", .{glfw.getErrorString()});
+            std.log.err("[ERROR] failed to initialize GLFW: {?s}", .{glfw.getErrorString()});
             std.process.exit(1);
         }
         // Create our window
@@ -38,13 +39,16 @@ pub const Window = struct {
             .context_version_major = 4,
             .context_version_minor = 5,
         }) orelse {
-            std.log.err("failed to create GLFW window: {?s}", .{glfw.getErrorString()});
+            std.log.err("[ERROR] failed to create GLFW window: {?s}", .{glfw.getErrorString()});
             std.process.exit(1);
         };
         glfw.makeContextCurrent(window);
 
         const proc: glfw.GLProc = undefined;
-        try gl.load(proc, glGetProcAddress);
+
+        gl.load(proc, glGetProcAddress) catch |err| {
+            std.debug.print("[ERROR] failed to load opengl got error {any}\n", .{err});
+        };
 
         return Self{
             .window = window,
@@ -71,6 +75,7 @@ pub const Window = struct {
 
     /// is the cursor
     pub fn hideCursor(self: Self) void {
+        std.debug.print("[INFO] hiding mouse cursor\n", .{});
         self.window.setInputModeCursor(.disabled);
     }
 
@@ -136,6 +141,7 @@ pub const Window = struct {
 
     /// frees the window
     pub fn deinit(self: Self) void {
+        std.debug.print("[INFO] deinit-ing window\n", .{});
         self.window.setInputModeCursor(.normal);
         self.window.destroy();
         glfw.terminate();

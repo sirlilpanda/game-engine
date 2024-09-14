@@ -1,6 +1,7 @@
 const cam = @import("../opengl_wrappers/camera.zig");
 const obj = @import("../objects/object.zig");
 const uniform = @import("uniform.zig");
+const std = @import("std");
 
 /// an example uniform sturcture
 pub const ExampleUniform = struct {
@@ -12,6 +13,7 @@ pub const ExampleUniform = struct {
 
     /// this function computes all the uniform values for the object
     pub fn draw(self: Self, camera: *cam.Camera, object: obj.Object) void {
+        std.debug.print("[ERROR] do not use this it does nothing, please create your own\n", .{});
         _ = self;
         _ = camera;
         _ = object;
@@ -19,6 +21,7 @@ pub const ExampleUniform = struct {
 
     /// this function is called when a program is reloaded
     pub fn reload(self: Self) void {
+        std.debug.print("[ERROR] do not use this it does nothing, please create your own\n", .{});
         _ = self;
     }
 };

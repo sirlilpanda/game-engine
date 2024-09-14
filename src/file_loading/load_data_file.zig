@@ -24,7 +24,10 @@ pub fn loadDatFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
 
     const total_buffer = try allocator.alloc(u8, 32 * num_verts * 2 * num_triangle);
     defer allocator.free(total_buffer);
-    const dat_file = try std.fs.cwd().readFile(filename, total_buffer);
+    const dat_file = std.fs.cwd().readFile(filename, total_buffer) catch |err| {
+        std.debug.print("[ERROR] loading {s} has error {any}\n", .{ filename, err });
+        return err;
+    };
     var lines = mem.split(u8, dat_file, file.eol);
     _ = lines.next();
 

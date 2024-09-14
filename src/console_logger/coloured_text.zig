@@ -49,7 +49,7 @@ pub const ColourPrinter = struct {
                 self.colour_bg.g,
                 self.colour_bg.b,
             },
-        ) catch |err| std.debug.print("couldnt update colour set string error {any}\n", .{err});
+        ) catch |err| std.debug.print("[ERROR]couldnt update colour set string error {any}\n", .{err});
 
         // std.debug.print("buf = {s}\n", .{self.colour_set_string});
     }

@@ -144,7 +144,6 @@ pub fn App(comptime Programs: type) type {
         /// gets the current and updates the camera, also handles screenshots, and program reloading
         /// this will be replaced in the future with some form of input struct, following the command pattern
         pub fn input(self: *Self) void {
-            // std.debug.print("delta time {}\n", .{self.delta_time});
             glfw.pollEvents();
             const sense = 50.0;
             const delta = self.window.getCursorDelta();
@@ -153,27 +152,21 @@ pub fn App(comptime Programs: type) type {
             self.camera.pitch -= (delta.y() * self.delta_time * sense);
 
             if (self.window.window.getKey(glfw.Key.w) == glfw.Action.press) {
-                // std.debug.print("w : pressed\n", .{});
                 dir.set_x(speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.s) == glfw.Action.press) {
-                // std.debug.print("s : pressed\n", .{});
                 dir.set_x(-speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.a) == glfw.Action.press) {
-                // std.debug.print("a : pressed\n", .{});
                 dir.set_z(-speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.d) == glfw.Action.press) {
-                // std.debug.print("d : pressed\n", .{});
                 dir.set_z(speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.space) == glfw.Action.press) {
-                // std.debug.print("space : pressed\n", .{});
                 dir.set_y(speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.left_control) == glfw.Action.press) {
-                // std.debug.print("left_control : pressed\n", .{});
                 dir.set_y(-speed * self.delta_time);
             }
             if (self.window.window.getKey(glfw.Key.minus) == glfw.Action.press)
@@ -186,7 +179,7 @@ pub fn App(comptime Programs: type) type {
             if (self.window.window.getKey(glfw.Key.r) == glfw.Action.press) {
                 inline for (std.meta.fields(Programs)) |f| {
                     if (@field(self.programs, f.name).reload() == shader.ShaderErrors.failed_to_compile) {
-                        std.debug.print("shader failed to complie\n", .{});
+                        std.debug.print("[ERROR] shader failed to complie\n", .{});
                     }
                 }
             }
@@ -201,13 +194,11 @@ pub fn App(comptime Programs: type) type {
                 const filename = std.fmt.allocPrint(self.alloc, "screen_shot-{name}.bmp", .{now}) catch "";
                 defer self.alloc.free(filename);
                 if (std.fs.cwd().access(filename, .{}) == std.fs.Dir.AccessError.FileNotFound) {
-                    std.debug.print("name : {s}\n", .{filename});
-                    std.debug.print("screenshot\n", .{});
                     self.window.saveImg(filename) catch |err| {
-                        std.debug.print("screenshot error : {any}\n", .{err});
+                        std.debug.print("[ERROR] screenshot error : {any}\n", .{err});
                     };
                 } else {
-                    std.debug.print("file {s} already exists\n", .{filename});
+                    std.debug.print("[WARN] file {s} already exists\n", .{filename});
                 }
             }
         }
