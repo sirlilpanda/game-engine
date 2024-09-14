@@ -184,21 +184,118 @@ pub fn Vec(comptime length: comptime_int) type {
             _ = fmt;
             _ = options;
             var colour_text = ColourPrinter.init();
-            try writer.print("vec({})[", .{length});
-            for (0..length - 1) |dex| {
-                colour_text.setFgColour(Colour.usizeToColour(dex));
-                try writer.print("{start}{}{end}, ", .{
-                    colour_text,
-                    self.vec[dex],
-                    colour_text,
-                });
+            colour_text.setFgColour(Colour.gold());
+
+            switch (length) {
+                1 => try writer.print(
+                    "[{start}DIPSHIT{end}]what the fuck are you doing with a vec 1, heres you value, use a fucking float if you want this {start}{}{end}",
+                    .{
+                        colour_text,
+                        colour_text,
+                        colour_text,
+                        self.vec[0],
+                        colour_text,
+                    },
+                ),
+                2 => {
+                    try writer.print("vec({start}2{end})[", .{
+                        colour_text,
+                        colour_text,
+                    });
+
+                    colour_text.setFgColour(Colour.red());
+                    try writer.print("{start}x : {}{end}, ", .{
+                        colour_text,
+                        self.x(),
+                        colour_text,
+                    });
+
+                    colour_text.setFgColour(Colour.lightBlue());
+                    try writer.print("{start}y : {}{end}]", .{
+                        colour_text,
+                        self.y(),
+                        colour_text,
+                    });
+                },
+                3 => {
+                    try writer.print("vec({start}3{end})[", .{
+                        colour_text,
+                        colour_text,
+                    });
+
+                    colour_text.setFgColour(Colour.red());
+                    try writer.print("{start}x : {}{end}, ", .{
+                        colour_text,
+                        self.x(),
+                        colour_text,
+                    });
+
+                    colour_text.setFgColour(Colour.lightBlue());
+                    try writer.print("{start}y : {}{end}, ", .{
+                        colour_text,
+                        self.y(),
+                        colour_text,
+                    });
+
+                    colour_text.setFgColour(Colour.green());
+                    try writer.print("{start}z : {}{end}]", .{
+                        colour_text,
+                        self.z(),
+                        colour_text,
+                    });
+                },
+                4 => {
+                    try writer.print("vec({start}4{end})[", .{
+                        colour_text,
+                        colour_text,
+                    });
+
+                    colour_text.setFgColour(Colour.red());
+                    try writer.print("{start}x : {}{end}, ", .{
+                        colour_text,
+                        self.x(),
+                        colour_text,
+                    });
+
+                    colour_text.setFgColour(Colour.lightBlue());
+                    try writer.print("{start}y : {}{end}, ", .{
+                        colour_text,
+                        self.y(),
+                        colour_text,
+                    });
+
+                    colour_text.setFgColour(Colour.green());
+                    try writer.print("{start}z : {}{end}, ", .{
+                        colour_text,
+                        self.z(),
+                        colour_text,
+                    });
+
+                    colour_text.setFgColour(Colour.yellow());
+                    try writer.print("{start}w : {}{end}]", .{
+                        colour_text,
+                        self.w(),
+                        colour_text,
+                    });
+                },
+                else => {
+                    try writer.print("vec({})[", .{length});
+                    for (0..length - 1) |dex| {
+                        colour_text.setFgColour(Colour.usizeToColour(dex));
+                        try writer.print("{start}{}{end}, ", .{
+                            colour_text,
+                            self.vec[dex],
+                            colour_text,
+                        });
+                    }
+                    colour_text.setFgColour(Colour.usizeToColour(length - 1));
+                    try writer.print("{start}{}{end}]", .{
+                        colour_text,
+                        self.vec[length - 1],
+                        colour_text,
+                    });
+                },
             }
-            colour_text.setFgColour(Colour.usizeToColour(length - 1));
-            try writer.print("{start}{}{end}]", .{
-                colour_text,
-                self.vec[length - 1],
-                colour_text,
-            });
         }
 
         // https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
