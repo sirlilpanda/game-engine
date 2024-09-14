@@ -68,18 +68,9 @@ pub fn main() !void {
     // app.programs.basic_program_texture.objects[1].?.colour = vec.init4(0.7, 0.7, 0.7, 1);
 
     var angle: f32 = 0;
-    var r_dir: f32 = 1;
-    var r: f32 = 0;
-    var b_dir: f32 = 1;
-    var b: f32 = 0;
-    var g_dir: f32 = 1;
-    var g: f32 = 0;
 
     while (!app.shouldStop()) : ({
         angle += 0.001;
-        r += 0.0003 * r_dir;
-        b += 0.00013 * b_dir;
-        g += 0.0007 * g_dir;
     }) {
         // gets the input
         app.input();
@@ -87,6 +78,7 @@ pub fn main() !void {
         app.render();
 
         var dex: usize = 2;
+        // rotate them fucken carbs
         while (dex < app.programs.basic_program_texture.objects.len) : (dex += 1) {
             app.programs.basic_program_texture.objects[dex].?.pos = vec.init3(
                 2 * @sin(@as(f32, @floatFromInt(dex)) + angle),
@@ -102,12 +94,6 @@ pub fn main() !void {
 
         std.debug.print("fps : {d:.4}    \r", .{app.fps()});
         // std.debug.print("cam {}\n", app.camera.eye);
-        if (r > 1) r_dir = -1;
-        if (r < 0) r_dir = 1;
-        if (b > 1) b_dir = -1;
-        if (b < 0) b_dir = 1;
-        if (g > 1) g_dir = -1;
-        if (g < 0) g_dir = 1;
     }
 
     // frees the app
