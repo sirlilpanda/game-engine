@@ -63,6 +63,6 @@ pub const Object = struct {
 
     /// calls to the renderer to draw the object
     pub fn draw(self: Self) void {
-        self.render.render();
+        self.render.render_3d.render();
     }
 };

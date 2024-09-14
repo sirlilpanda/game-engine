@@ -61,7 +61,7 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
         }
 
         /// add a vert and fragment shader
-        pub fn add_vert_n_frag(self: *Self, allocator: Allocator, vert_path: []const u8, frag_path: []const u8) !void {
+        pub fn addVertNFrag(self: *Self, allocator: Allocator, vert_path: []const u8, frag_path: []const u8) !void {
             const vert = shader.Shader.init(
                 allocator,
                 vert_path,

@@ -21,7 +21,8 @@ const file = @import("../file_loading/loadfile.zig");
 const basic = @import("basic_program.zig");
 const obj_loader = @import("../objects/object_loader_service.zig");
 const tex_loader = @import("../textures/texture_loader_service.zig");
-
+const prog_2d = @import("2d_program.zig");
+const prog_text = @import("text_program.zig");
 const prog_error = error{
     program_not_in_provided_programs,
 };
@@ -58,6 +59,8 @@ pub fn App(comptime Programs: type) type {
         delta_time: f32,
         /// the timer for getting the delta time
         timer: time.Timer,
+        /// for making sure inputs to get pushed to much
+        input_lap: i64 = 0,
 
         // [TODO] work out how to write this
         // fn check_prog_struct(self: Self) void {
@@ -179,30 +182,33 @@ pub fn App(comptime Programs: type) type {
 
             self.camera.updateFps(dir);
 
-            if (self.window.window.getKey(glfw.Key.r) == glfw.Action.press) {
-                inline for (std.meta.fields(Programs)) |f| {
-                    if (@field(self.programs, f.name).reload() == shader.ShaderErrors.failed_to_compile) {
-                        std.debug.print("[ERROR] shader failed to complie\n", .{});
-                    }
-                }
-            }
-
             if (self.window.window.getKey(glfw.Key.escape) == glfw.Action.press) {
                 self.window.window.setShouldClose(true);
             }
 
-            if (self.window.window.getKey(glfw.Key.p) == glfw.Action.press) {
-                const now = TimeStamp.current();
-
-                const filename = std.fmt.allocPrint(self.alloc, "screen_shot-{name}.bmp", .{now}) catch "";
-                defer self.alloc.free(filename);
-                if (std.fs.cwd().access(filename, .{}) == std.fs.Dir.AccessError.FileNotFound) {
-                    self.window.saveImg(filename) catch |err| {
-                        std.debug.print("[ERROR] screenshot error : {any}\n", .{err});
-                    };
-                } else {
-                    std.debug.print("[WARN] file {s} already exists\n", .{filename});
+            if (self.input_lap + 2 <= time.timestamp()) {
+                if (self.window.window.getKey(glfw.Key.r) == glfw.Action.press) {
+                    inline for (std.meta.fields(Programs)) |f| {
+                        if (@field(self.programs, f.name).reload() == shader.ShaderErrors.failed_to_compile) {
+                            std.debug.print("[ERROR] shader failed to complie\n", .{});
+                        }
+                    }
                 }
+
+                if (self.window.window.getKey(glfw.Key.p) == glfw.Action.press) {
+                    const now = TimeStamp.current();
+
+                    const filename = std.fmt.allocPrint(self.alloc, "screen_shot-{name}.bmp", .{now}) catch "";
+                    defer self.alloc.free(filename);
+                    if (std.fs.cwd().access(filename, .{}) == std.fs.Dir.AccessError.FileNotFound) {
+                        self.window.saveImg(filename) catch |err| {
+                            std.debug.print("[ERROR] screenshot error : {any}\n", .{err});
+                        };
+                    } else {
+                        std.debug.print("[WARN] file {s} already exists\n", .{filename});
+                    }
+                }
+                self.input_lap = time.timestamp();
             }
         }
 
@@ -223,7 +229,8 @@ pub fn App(comptime Programs: type) type {
 /// and texture
 pub const BasicPrograms = struct {
     basic_program_texture: basic.BasicProgramTex,
-    // basic_program: basic.BasicProgram,
+    basic_program_2d: prog_2d.BasicProgram2D,
+    basic_program_text: prog_text.BasicProgramText,
 };
 
 /// the type of a basic app that uses the BasicProgramTex program
