@@ -42,9 +42,11 @@ pub const ObjectService = struct {
     /// loads a new object, and wont open a file unless its not already in the cache
     pub fn load(self: *Self, object_path: []const u8, obj_type: ObjectType) !obj.Object {
         // ill change this to check the file extention later
-        std.debug.print("trying to load : {s}\n", .{object_path});
+        std.debug.print("[INFO] trying to load : {s}\n", .{object_path});
         //this is a get or put but that func scares me
         if (self.cache.contains(object_path)) {
+            std.debug.print("[INFO] renderer found, using cached one\n", .{});
+
             return obj.Object{
                 .pos = vec.Vec3.zeros(),
                 .roation = vec.Vec3.zeros(),
@@ -53,10 +55,14 @@ pub const ObjectService = struct {
                 .texture = null,
             };
         } else {
+            std.debug.print("[INFO] renderer not found, creating new one\n", .{});
             var renderer = render.Renderer.init();
             const obj_file: file.ObjectFile = switch (obj_type) {
-                ObjectType.dat => try file.loadDatFile(self.allocator, object_path),
-                ObjectType.obj => try file.loadObjFile(self.allocator, object_path),
+                ObjectType.dat => file.loadDatFile(self.allocator, object_path),
+                ObjectType.obj => file.loadObjFile(self.allocator, object_path),
+            } catch |err| {
+                std.debug.print("[ERROR] tried to load {s} got error {any}\n", .{ object_path, err });
+                return err;
             };
 
             try renderer.loadFile(obj_file);
