@@ -4,12 +4,80 @@ const std = @import("std");
 
 const Allocator = std.mem.Allocator;
 
-/// this should be name 3d renderer
+const RenderType = enum {
+    render_3d,
+    render_2d,
+};
+
+pub const Renderer = union(RenderType) {
+    const Self = @This();
+    render_3d: Render3d,
+    render_2d: Render2d,
+
+    pub fn destroy(self: Self) void {
+        switch (self) {
+            .render_3d => self.destroy(),
+            .render_2d => self.destroy(),
+        }
+    }
+};
+
+pub const Render2d = struct {
+    const Self = @This();
+
+    const quad_verts = [8]f32{
+        0.0, 1.0,
+        0.0, 0.0,
+        1.0, 1.0,
+        1.0, 0.0,
+    };
+
+    vertex_array_object: gl.GLuint,
+
+    vertex_buffer_object: gl.GLuint,
+
+    /// creates a new render with buffer loactions on the gpu
+    pub fn init() Self {
+        var self = Self{
+            .vertex_array_object = undefined,
+            .vertex_buffer_object = undefined,
+        };
+
+        gl.genVertexArrays(1, &self.vertex_array_object);
+        gl.genBuffers(1, &self.vertex_buffer_object);
+
+        std.debug.print("[INFO] creating 2d renderer with id {}\n", .{self.vertex_array_object});
+        gl.bindVertexArray(self.vertex_array_object);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
+        gl.namedBufferData(
+            self.vertex_buffer_object,
+            @as(isize, @intCast(quad_verts.len * @sizeOf(gl.GLfloat))),
+            @ptrCast(&quad_verts[0]),
+            gl.STATIC_DRAW,
+        );
+        gl.enableVertexArrayAttrib(self.vertex_array_object, 0);
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, gl.FALSE, 0, null);
+
+        return self;
+    }
+
+    pub fn render(self: Self) void {
+        gl.bindVertexArray(self.vertex_array_object);
+        gl.drawArraysInstanced(
+            gl.TRIANGLE_STRIP,
+            0,
+            @as(gl.GLsizei, @intCast(quad_verts.len)),
+            1,
+        );
+    }
+};
+
 /// this store all the buffer data locations for
 /// 3d objects, i will be changing this to a union
 /// in the future to allow for differnt buffers
 /// arrangements to be used
-pub const Renderer = struct {
+pub const Render3d = struct {
     const Self = @This();
     /// the id of the array object
     vertex_array_object: gl.GLuint,
@@ -41,17 +109,19 @@ pub const Renderer = struct {
         gl.genBuffers(1, &self.vertex_index_object);
         gl.genBuffers(1, &self.vertex_texture_object);
 
-        gl.bindVertexArray(self.vertex_array_object);
-        gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
-        gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_normal_object);
-        gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_index_object);
-        gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_texture_object);
+        std.debug.print("[INFO] creating 3d renderer with id {}\n", .{self.vertex_array_object});
+        // gl.bindVertexArray(self.vertex_array_object);
+        // gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
+        // gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_normal_object);
+        // gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_index_object);
+        // gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_texture_object);
 
         return self;
     }
 
     /// loads a new objectFile in to the gpu
     pub fn loadFile(self: *Self, dat: file.ObjectFile) !void {
+        gl.bindVertexArray(self.vertex_array_object);
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
         gl.namedBufferData(
             self.vertex_buffer_object,
@@ -102,7 +172,7 @@ pub const Renderer = struct {
 
     /// destroies all the buffers on the gpu
     pub fn destroy(self: Self) void {
-        std.debug.print("[INFO] deleting renderer with id {}\n", .{self.vertex_array_object});
+        std.debug.print("[INFO] deleting 3d renderer with id {}\n", .{self.vertex_array_object});
         gl.deleteVertexArrays(1, &self.vertex_array_object);
         gl.deleteBuffers(1, &self.vertex_buffer_object);
         gl.deleteBuffers(1, &self.vertex_normal_object);
