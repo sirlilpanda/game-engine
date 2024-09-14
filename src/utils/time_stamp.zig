@@ -1,8 +1,9 @@
 const time = @import("std").time;
 const std = @import("std");
 
-const TimeStamp = struct {
+pub const TimeStamp = struct {
     const Self = @This();
+
     millisec: u64,
     sec: u64,
     min: u64,
@@ -90,16 +91,26 @@ const TimeStamp = struct {
     }
 
     pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
-        _ = fmt;
         _ = options;
-        try writer.print("{d:.4}-{d:.2}-{d:.2}_{d:.2}:{d:.2}:{d:.2}", .{
-            self.day,
-            self.month,
-            self.year,
-            self.hour,
-            self.min,
-            self.sec,
-        });
+        if (std.mem.eql(u8, fmt, "name")) {
+            try writer.print("{d:.4}-{d:.2}-{d:.2}_{d:.2}-{d:.2}-{d:.2}", .{
+                self.day,
+                self.month,
+                self.year,
+                self.hour,
+                self.min,
+                self.sec,
+            });
+        } else {
+            try writer.print("{d:.4}-{d:.2}-{d:.2}_{d:.2}:{d:.2}:{d:.2}", .{
+                self.day,
+                self.month,
+                self.year,
+                self.hour,
+                self.min,
+                self.sec,
+            });
+        }
     }
 };
 
