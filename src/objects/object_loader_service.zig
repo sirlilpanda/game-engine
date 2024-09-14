@@ -49,7 +49,9 @@ pub const ObjectService = struct {
             };
         } else {
             std.debug.print("[INFO] renderer not found, creating new one\n", .{});
-            var renderer = render.Renderer.init();
+            var renderer = render.Renderer{
+                .render_3d = render.Render3d.init(),
+            };
             const obj_file: file.ObjectFile = switch (obj_type) {
                 ObjectType.dat => file.loadDatFile(self.allocator, object_path),
                 ObjectType.obj => file.loadObjFile(self.allocator, object_path),
@@ -58,7 +60,7 @@ pub const ObjectService = struct {
                 return err;
             };
 
-            try renderer.loadFile(obj_file);
+            try renderer.render_3d.loadFile(obj_file);
 
             try self.cache.put(object_path, renderer);
 
@@ -76,7 +78,7 @@ pub const ObjectService = struct {
     pub fn deinit(self: *Self) void {
         std.debug.print("[INFO] unloading object loader service\n", .{});
         for (self.cache.values()) |renderer| {
-            renderer.destroy();
+            renderer.render_3d.destroy();
         }
 
         self.cache.deinit();
