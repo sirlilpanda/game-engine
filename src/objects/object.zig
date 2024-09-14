@@ -3,7 +3,7 @@ const mat = @import("../math/matrix.zig");
 const uni = @import("../opengl_wrappers/uniform.zig");
 const cam = @import("../opengl_wrappers/camera.zig");
 const ren = @import("../opengl_wrappers/render.zig");
-const tex = @import("../opengl_wrappers/texture.zig");
+const tex = @import("../textures/texture.zig");
 const std = @import("std");
 
 /// current this object type only supports 3d objects
