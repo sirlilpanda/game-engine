@@ -15,12 +15,12 @@ const render = @import("../opengl_wrappers/render.zig");
 const uni = @import("../opengl_wrappers/uniform.zig");
 const cam = @import("../opengl_wrappers/camera.zig");
 const Window = @import("../opengl_wrappers/window.zig").Window;
-const tex = @import("../opengl_wrappers/texture.zig");
 const cprint = @import("../console_logger/coloured_text.zig");
 const obj = @import("../objects/object.zig");
 const file = @import("../file_loading/loadfile.zig");
 const basic = @import("basic_program.zig");
 const obj_loader = @import("../objects/object_loader_service.zig");
+const tex_loader = @import("../textures/texture_loader_service.zig");
 
 const prog_error = error{
     program_not_in_provided_programs,
@@ -48,6 +48,8 @@ pub fn App(comptime Programs: type) type {
         physic_objects: std.ArrayList(*obj.Object),
         /// a service for loading and caching objects good flyweight pattern
         obj_loader_service: obj_loader.ObjectService,
+        /// a service for loading and caching textures good flyweight pattern
+        texture_loader_service: tex_loader.TextureService,
         /// due to alot of the opengl programs using the same camera one can be stored here
         camera: cam.Camera,
         /// a global GPA allocator in case you need it
@@ -69,7 +71,8 @@ pub fn App(comptime Programs: type) type {
                 .window = undefined,
                 .programs = programs,
                 .physic_objects = undefined,
-                .obj_loader_service = try obj_loader.ObjectService.init(alloc),
+                .obj_loader_service = obj_loader.ObjectService.init(alloc),
+                .texture_loader_service = tex_loader.TextureService.init(alloc),
                 .camera = undefined,
                 .alloc = alloc,
                 .delta_time = 0,
@@ -210,6 +213,7 @@ pub fn App(comptime Programs: type) type {
             }
             self.window.deinit();
             self.obj_loader_service.deinit();
+            self.texture_loader_service.deinit();
         }
     };
 }
