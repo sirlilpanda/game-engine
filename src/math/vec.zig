@@ -45,6 +45,9 @@ pub fn cross(a: Vec3, b: Vec3) Vec3 {
 
 /// creates a new vector type with a given length
 pub fn Vec(comptime length: comptime_int) type {
+    comptime if (length == 0) {
+        @compileError("[WARN] you can not have a length of zero for a vector\n");
+    };
     return struct {
         const Self = @This();
         vec: @Vector(length, f32),
