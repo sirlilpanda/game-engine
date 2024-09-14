@@ -8,12 +8,6 @@ const file = @import("../file_loading/loadfile.zig");
 const Allocator = std.mem.Allocator;
 const renderCache = std.StringArrayHashMap(render.Renderer);
 
-/// singletons are bad boo hoo
-const maded: bool = false;
-
-const ObjectServiceError = error{
-    singleton_already_created,
-};
 /// currnet support object types
 pub const ObjectType = enum {
     dat,
@@ -31,8 +25,7 @@ pub const ObjectService = struct {
     /// the allocator for loading the new objects
     allocator: Allocator,
 
-    pub fn init(allocator: Allocator) ObjectServiceError!Self {
-        if (maded) return ObjectServiceError.singleton_already_created;
+    pub fn init(allocator: Allocator) Self {
         return Self{
             .cache = renderCache.init(allocator),
             .allocator = allocator,
@@ -81,6 +74,7 @@ pub const ObjectService = struct {
 
     /// frees all the memory
     pub fn deinit(self: *Self) void {
+        std.debug.print("[INFO] unloading object loader service\n", .{});
         for (self.cache.values()) |renderer| {
             renderer.destroy();
         }
