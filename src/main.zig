@@ -1,5 +1,7 @@
 const BasicApp = @import("app/app.zig").BasicApp;
 const basic = @import("app/basic_program.zig");
+const basic2 = @import("app/2d_program.zig");
+const basic_tex = @import("app/text_program.zig");
 const std = @import("std");
 const shader = @import("/opengl_wrappers/shader.zig");
 const vec = @import("math/vec.zig");
@@ -19,8 +21,15 @@ pub fn main() !void {
         undefined,
     );
 
+    const text_to_render = "some really long string i want to test";
     // has to be done this way to ensure that opengl is init'ed
     app.programs.basic_program_texture = try basic.createBasicProgramWTexture(allocator);
+    app.programs.basic_program_2d = try basic2.createBasic2DProgram(allocator);
+    app.programs.basic_program_text = try basic_tex.createBasicTextProgram(allocator);
+    app.programs.basic_program_text.uniforms.font_texture_atlas = try app.texture_loader_service.load("textures/font_atlas.bmp");
+    app.programs.basic_program_text.uniforms.aspect_ratio = app.window.getAspectRatio();
+    app.programs.basic_program_text.uniforms.text = text_to_render;
+
     app.programs.basic_program_texture.camera = &app.camera;
 
     app.programs.basic_program_texture.objects[0] = try app.obj_loader_service.load("objects/Crab.obj", .obj);
