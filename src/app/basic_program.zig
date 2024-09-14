@@ -108,7 +108,7 @@ pub fn createBasicProgramWTexture(allocator: std.mem.Allocator) !BasicProgramTex
 
     const vert = try shader.Shader.init(allocator, "shaders/crab.vert", .vertex);
     const frag = try shader.Shader.init(allocator, "shaders/crab.frag", .frag);
-    std.debug.print("\n\nLoaded\n", .{});
+
     prog.loadShader(vert);
     prog.loadShader(frag);
     prog.link();

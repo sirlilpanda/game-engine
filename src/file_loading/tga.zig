@@ -58,10 +58,12 @@ pub const Tga = struct {
     /// loads a new tga image
     pub fn load(allocator: Allocator, filename: []const u8) !Self {
         const current_dir = std.fs.cwd();
-        var buffer: [256]u8 = undefined;
 
-        std.debug.print("std.fs.cwd : {s}\n", .{try current_dir.realpath(filename, &buffer)});
-        const obj_file: std.fs.File = try current_dir.openFile(filename, .{});
+        const obj_file: std.fs.File = current_dir.openFile(filename, .{}) catch |err| {
+            var buffer: [256]u8 = undefined;
+            std.debug.print("[ERROR] loading {s} : error {any}\n", .{ try current_dir.realpath(filename, &buffer), err });
+            return err;
+        };
 
         var head: [@sizeOf(Header)]u8 = undefined;
         if (try obj_file.read(&head) != @sizeOf(Header)) return TgaFileError.incorrect_header_length;
@@ -71,10 +73,10 @@ pub const Tga = struct {
 
         const data = try allocator.alloc(u8, amount);
         _ = try obj_file.readAll(data);
-        std.debug.print("amount : {}\n", .{amount});
+        // std.debug.print("amount : {}\n", .{amount});
         // i believe the packet struct size is wrong at it over writes some image data
         std.mem.reverse(u8, data);
-        std.debug.print("reversed\n", .{});
+        // std.debug.print("reversed\n", .{});
 
         var row: usize = 0;
         while (row < header.height) : (row += 1) {
@@ -96,7 +98,10 @@ pub const Tga = struct {
 
     /// save the given tga file to the with the name
     pub fn save(self: Self, name: []const u8) !void {
-        const outfile = try std.fs.cwd().createFile(name, .{ .truncate = true });
+        const outfile = std.fs.cwd().createFile(name, .{ .truncate = true }) catch |err| {
+            std.debug.print("[ERROR] attempting to create file {s} got error {any}", .{ name, err });
+            return err;
+        };
         std.debug.print("len : {}\n", .{std.mem.toBytes(self.header).len});
         _ = try outfile.write(&std.mem.toBytes(self.header));
         _ = try outfile.write(self.data);

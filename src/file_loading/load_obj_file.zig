@@ -154,14 +154,11 @@ inline fn parseFaceData(line: []const u8) !FaceElements {
 
 /// loads the given object file
 pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile {
-    const e_file = std.fs.cwd().openFile(filename, .{});
-    var buffer: [256]u8 = undefined;
+    const obj_file: std.fs.File = std.fs.cwd().openFile(filename, .{}) catch |err| {
+        std.debug.print("[ERROR] loading {s} got error {any}\n", .{ filename, err });
+        return err;
+    };
 
-    if (e_file == std.fs.File.OpenError.FileNotFound) {
-        std.debug.print("file : {s} not found\n", .{try std.fs.cwd().realpath(filename, &buffer)});
-    }
-
-    const obj_file: std.fs.File = try e_file;
     const file_end = try obj_file.getEndPos();
     // std.debug.print("end : {}\n", .{file_end});
     const data = try allocator.alloc(u8, @as(usize, file_end));
@@ -186,7 +183,7 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
         if (token_type) |t| {
             switch (t) {
                 token.comment => {
-                    std.debug.print("token type : {s} \n", .{"comment"});
+                    std.debug.print("[INFO] .obj token type : {s} : \"{s}\"\n", .{ "comment", line });
                 },
                 token.vertex => {
                     // std.debug.print("token type : {s} ", .{"vertex"});
@@ -213,9 +210,8 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
                 },
             }
         } else {
-            std.debug.print("token type : {s} \n", .{"no token"});
+            std.debug.print("[WARN] token type not found : \"{s}\"\n", .{line});
         }
-        // std.debug.print("{s}\n", .{line});
     }
 
     // this works but not really
