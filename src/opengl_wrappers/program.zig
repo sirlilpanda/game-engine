@@ -36,6 +36,7 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
 
         /// creates a new opengl program
         pub fn init() Self {
+            std.debug.print("[INFO] created new opengl program\n", .{});
             return Self{
                 .program_id = gl.createProgram(),
                 .shaders = [_]?shader.Shader{null} ** AMOUNT_OF_SHADERS,
@@ -48,6 +49,7 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
 
         /// links the unifroms for program, this happens during the link function
         fn linkUniforms(self: *Self) void {
+            std.debug.print("[INFO] linking uniforms to opengl program with id {}\n", .{self.program_id});
             var new_uni: unifrom_type = unifrom_type{};
             // this pretty much acts as a comptime hashmap
             inline for (std.meta.fields(unifrom_type)) |f| {
@@ -60,16 +62,22 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
 
         /// add a vert and fragment shader
         pub fn add_vert_n_frag(self: *Self, allocator: Allocator, vert_path: []const u8, frag_path: []const u8) !void {
-            const vert = try shader.Shader.init(
+            const vert = shader.Shader.init(
                 allocator,
                 vert_path,
                 gl.VERTEX_SHADER,
-            );
-            const frag = try shader.Shader.init(
+            ) catch |err| {
+                std.debug.print("[ERROR] attempting to load shader {s} got error {any}\n", .{ vert_path, err });
+                return err;
+            };
+            const frag = shader.Shader.init(
                 allocator,
                 frag_path,
                 gl.FRAGMENT_SHADER,
-            );
+            ) catch |err| {
+                std.debug.print("[ERROR] attempting to load shader {s} got error {any}\n", .{ frag_path, err });
+                return err;
+            };
 
             self.loadShader(vert);
             self.loadShader(frag);
@@ -86,18 +94,21 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
 
         /// add a given uniform to the program
         pub fn addUniform(self: Self, uni: *uniform.Uniform) void {
+            std.debug.print("[INFO] getting unifrom locations for opengl program with id {}\n", .{self.program_id});
             const loc = gl.getUniformLocation(self.program_id, @ptrCast(uni.name));
             uni.addLocation(loc);
         }
 
         /// links the program and the uniforms
         pub fn link(self: *Self) void {
+            std.debug.print("[INFO] linking opengl program with id {}\n", .{self.program_id});
             gl.linkProgram(self.program_id);
             self.linkUniforms();
         }
 
         /// reloads the program shaders
         pub fn reload(self: *Self) !void {
+            std.debug.print("[INFO] reloading opengl program with id {}\n", .{self.program_id});
             var prog = Self{
                 .program_id = gl.createProgram(),
                 .shaders = [_]?shader.Shader{null} ** AMOUNT_OF_SHADERS,
@@ -109,13 +120,17 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
 
             for (self.shaders) |s| {
                 if (s) |sha| {
-                    const shad = sha.reload();
-                    if (shad == shader.ShaderErrors.failed_to_compile) {
-                        std.debug.print("get unloaded egg\n", .{});
-                        prog.unload();
-                        return shader.ShaderErrors.failed_to_compile;
-                    }
-                    prog.loadShader(try shad);
+                    const shad = sha.reload() catch |err| {
+                        if (err == shader.ShaderErrors.failed_to_compile) {
+                            std.debug.print("[ERROR] shader failed to complie {s}\n", .{sha.shader_path});
+                            prog.unload();
+                            return shader.ShaderErrors.failed_to_compile;
+                        } else {
+                            std.debug.print("[ERROR] shader failed to complie {s} with error {any}\n", .{ sha.shader_path, err });
+                            return err;
+                        }
+                    };
+                    prog.loadShader(shad);
                 }
             }
             self.unload();
@@ -126,18 +141,19 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
             self.shaders = prog.shaders;
             self.shader_index = prog.shader_index;
             self.uniforms = prog.uniforms;
-
             self.uniforms.reload();
         }
 
         // this was done so i can swap programs
         /// sets this program as the one to be used by opengl
         pub fn use(self: Self) void {
+            // std.debug.print("[INFO] using opengl program with id {}\n", .{self.program_id});
             gl.useProgram(self.program_id);
         }
 
         /// unloads the program and all its shaders
         pub fn unload(self: Self) void {
+            std.debug.print("[INFO] unloading opengl program with id {}\n", .{self.program_id});
             for (self.shaders) |s| {
                 if (s) |sha| sha.unload();
             }

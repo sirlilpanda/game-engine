@@ -78,7 +78,10 @@ pub const Shader = struct {
 
     /// creates a new shader from the given shader path
     pub fn init(allocator: Allocator, shader_path: []const u8, shader_type: ShaderTypes) !Self {
-        const shaderfile: []u8 = try loadfile(allocator, shader_path);
+        const shaderfile: []u8 = loadfile(allocator, shader_path) catch |err| {
+            std.debug.print("[ERROR] failed to load shader file {s}, got error {any}", .{ shader_path, err });
+            return err;
+        };
 
         defer allocator.free(shaderfile);
 
@@ -95,14 +98,15 @@ pub const Shader = struct {
 
         gl.shaderSource(shader_id, 1, @ptrCast(&shaderfile), null);
         gl.compileShader(shader_id);
-        try checkStatus(shader_id, allocator);
 
-        return Self{
+        const self = Self{
             .id = shader_id,
             .shader_path = shader_path,
             .allocator = allocator,
             .shader_type = shader_type,
         };
+        try checkStatus(self, allocator);
+        return self;
     }
 
     /// creates a new shader, but doesnt load in the file, instead accpets an loaded file
@@ -120,27 +124,28 @@ pub const Shader = struct {
 
         gl.shaderSource(shader_id, 1, @ptrCast(&shader_file), null);
         gl.compileShader(shader_id);
-        try checkStatus(shader_id, allocator);
 
-        return Self{
+        const self = Self{
             .id = shader_id,
             .shader_path = static_shader_name,
             .allocator = allocator,
             .shader_type = shader_type,
         };
+        try checkStatus(self, allocator);
+        return self;
     }
 
     /// checks to see if any complie error has occured
-    fn checkStatus(shader_id: gl.GLuint, allocator: Allocator) !void {
+    fn checkStatus(self: Self, allocator: Allocator) !void {
         var status: gl.GLint = undefined;
-        gl.getShaderiv(shader_id, gl.COMPILE_STATUS, &status);
+        gl.getShaderiv(self.id, gl.COMPILE_STATUS, &status);
         if (status == gl.FALSE) {
             var info_log_len: gl.GLsizei = undefined;
-            gl.getShaderiv(shader_id, gl.INFO_LOG_LENGTH, &info_log_len);
+            gl.getShaderiv(self.id, gl.INFO_LOG_LENGTH, &info_log_len);
             const error_string: []u8 = try allocator.alloc(u8, @as(usize, @intCast(info_log_len)));
             defer allocator.free(error_string);
-            gl.getShaderInfoLog(shader_id, info_log_len, null, @ptrCast(&error_string[0]));
-            std.debug.print("[ERROR] : {s}\n", .{error_string});
+            gl.getShaderInfoLog(self.id, info_log_len, null, @ptrCast(&error_string[0]));
+            std.debug.print("[ERROR] shader {s} got error when compling : {s}\n", .{ self.shader_path, error_string });
             return ShaderErrors.failed_to_compile;
         }
     }
@@ -148,14 +153,17 @@ pub const Shader = struct {
     /// calls when the shader file is reloaded
     pub fn reload(self: Self) !Self {
         if (std.mem.eql(u8, self.shader_path, static_shader_name)) {
+            std.debug.print("[ERROR] attempted to reload static shader\n", .{});
             return ShaderErrors.static_shader_cant_reload;
         } else {
+            std.debug.print("[INFO] reloading shader {s}\n", .{self.shader_path});
             return try init(self.allocator, self.shader_path, self.shader_type);
         }
     }
 
     /// unloads the shader
     pub fn unload(self: Self) void {
+        std.debug.print("[INFO] unloading shader {s}\n", .{self.shader_path});
         gl.deleteShader(self.id);
     }
 };
