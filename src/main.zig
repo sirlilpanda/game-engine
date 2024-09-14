@@ -2,8 +2,8 @@ const BasicApp = @import("app/app.zig").BasicApp;
 const basic = @import("app/basic_program.zig");
 const std = @import("std");
 const shader = @import("/opengl_wrappers/shader.zig");
-const tex = @import("opengl_wrappers/texture.zig");
 const vec = @import("math/vec.zig");
+const Quaternion = @import("math/quaternion.zig").Quaternion;
 const obj = @import("objects/object.zig");
 const Random = @import("std").rand.Random;
 
@@ -25,18 +25,18 @@ pub fn main() !void {
 
     app.programs.basic_program_texture.objects[0] = try app.obj_loader_service.load("objects/Crab.obj", .obj);
     var plane = try app.obj_loader_service.load("objects/plane.obj", .obj);
-    plane.texture = tex.Texture.init(allocator, "textures/sky_box_.tga") catch null;
+    plane.texture = try app.texture_loader_service.load("textures/sky_box_.tga");
     plane.pos = vec.init3(10.0, 2.0, 4.0);
 
     var cube = try app.obj_loader_service.load("objects/cube.obj", .obj);
-    cube.texture = try tex.Texture.init(allocator, "textures/sky_box_.tga");
+    cube.texture = try app.texture_loader_service.load("textures/sky_box_.tga");
     cube.scale = vec.init3(30000, 30000, 30000);
 
     var crab = try app.obj_loader_service.load("objects/Crab.obj", .obj);
-    crab.texture = try tex.Texture.init(allocator, "textures/Crab_D.tga");
+    crab.texture = try app.texture_loader_service.load("textures/Crab_D.tga");
 
     var sphere = try app.obj_loader_service.load("objects/donut.obj", .obj);
-    sphere.texture = try tex.Texture.init(allocator, "textures/Earth.bmp");
+    sphere.texture = try app.texture_loader_service.load("textures/Earth.bmp");
     for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
         var ject: obj.Object = undefined;
 
@@ -64,10 +64,8 @@ pub fn main() !void {
     app.programs.basic_program_texture.objects[1].?.scale = vec.init3(1, 1, 1);
     app.programs.basic_program_texture.objects[1].?.colour = vec.init4(1, 0, 1, 1);
     // app.programs.basic_program_texture.objects[1] = try app.obj_loader_service.load("objects/4V5T.obj", .obj);
-    // app.programs.basic_program_texture.objects[1].?=.texture = tex.Texture.init(allocator, "textures/rgb.tga") catch null;
+    // app.programs.basic_program_texture.objects[1].?=.texture = app.texture_loader_service.load("textures/rgb.tga") catch null;
     // app.programs.basic_program_texture.objects[1].?.colour = vec.init4(0.7, 0.7, 0.7, 1);
-
-    std.debug.print("obj : {any}\n", .{app.programs.basic_program_texture.objects[0]});
 
     var angle: f32 = 0;
     var r_dir: f32 = 1;
@@ -102,7 +100,7 @@ pub fn main() !void {
             );
         }
 
-        std.debug.print("fps : {}]\r", .{app.fps()});
+        std.debug.print("fps : {d:.4}    \r", .{app.fps()});
         // std.debug.print("cam {}\n", app.camera.eye);
         if (r > 1) r_dir = -1;
         if (r < 0) r_dir = 1;
