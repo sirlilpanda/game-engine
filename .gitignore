@@ -8,3 +8,5 @@ docs/
 // makes sure i dont commit my zig 0.13.0 wrapper scripts
 zig* 
 screen_shot*.bmp
+textures/earth_2.bmp
+*.mtl
