@@ -102,6 +102,7 @@ pub const Renderer = struct {
 
     /// destroies all the buffers on the gpu
     pub fn destroy(self: Self) void {
+        std.debug.print("[INFO] deleting renderer with id {}\n", .{self.vertex_array_object});
         gl.deleteVertexArrays(1, &self.vertex_array_object);
         gl.deleteBuffers(1, &self.vertex_buffer_object);
         gl.deleteBuffers(1, &self.vertex_normal_object);
