@@ -21,15 +21,9 @@ pub fn main() !void {
         undefined,
     );
 
-    const text_to_render = "some really long string i want to test";
     // has to be done this way to ensure that opengl is init'ed
     app.programs.basic_program_texture = try basic.createBasicProgramWTexture(allocator);
     app.programs.basic_program_2d = try basic2.createBasic2DProgram(allocator);
-    app.programs.basic_program_text = try basic_tex.createBasicTextProgram(allocator);
-    app.programs.basic_program_text.uniforms.font_texture_atlas = try app.texture_loader_service.load("textures/font_atlas.bmp");
-    app.programs.basic_program_text.uniforms.aspect_ratio = app.window.getAspectRatio();
-    app.programs.basic_program_text.uniforms.text = text_to_render;
-
     app.programs.basic_program_texture.camera = &app.camera;
 
     app.programs.basic_program_texture.objects[0] = try app.obj_loader_service.load("objects/Crab.obj", .obj);
@@ -100,9 +94,6 @@ pub fn main() !void {
                 0,
             );
         }
-
-        std.debug.print("fps : {d:.4}    \r", .{app.fps()});
-        // std.debug.print("cam {}\n", app.camera.eye);
     }
 
     // frees the app
