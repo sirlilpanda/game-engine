@@ -133,8 +133,9 @@ pub const Colour = struct {
         );
     }
 
-    pub fn pointToColour(point: usize) Colour {
-        const normed_point_hue: u16 = @as(u16, @intFromFloat((@as(f32, @floatFromInt(point)) / @as(f32, @floatFromInt(std.math.maxInt(usize)))) * 255 * 5)) + 255;
+    /// point must be an unsigned number type
+    pub fn pointToColour(point: anytype) Colour {
+        const normed_point_hue: u16 = @as(u16, @intFromFloat((@as(f32, @floatFromInt(point)) / @as(f32, @floatFromInt(std.math.maxInt(@TypeOf(point))))) * 255 * 5)) + 255;
         const normed_point_rgb: u8 = @intCast((normed_point_hue + 1) % 256);
 
         if (normed_point_hue <= 255 * 2) { //count up
