@@ -41,7 +41,7 @@ currently the project has 4 main directories:
 - fully custom opengl programs at complie time
 
 # how to run
-currently the game engine uses zig version `0.13.0-dev.351+64ef45eb0` as this is the lastest version that can complie `zig glfw`.
+currently the game engine uses [zig version](https://machengine.org/docs/nominated-zig/#202450-mach) `0.13.0-dev.351+64ef45eb0` as this is the lastest version that can complie `zig glfw`.
 to build just run `zig build`
 
 # controls
