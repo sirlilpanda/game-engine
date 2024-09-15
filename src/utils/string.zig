@@ -2,24 +2,25 @@ const std = @import("std");
 const vec = @import("../math/vec.zig");
 const Colour = @import("../utils/colour.zig").Colour;
 /// allows coloured printing to std.debug / std error
-pub const colour_set_string_fmt = "\x1B[38;2;{d};{d};{d}m\x1B[48;2;{d};{d};{d}m";
+pub const colour_set_string_fg_fmt = "\x1B[38;2;{d};{d};{d}m";
+pub const colour_set_string_bg_fmt = "\x1B[48;2;{d};{d};{d}m";
+pub const colour_set_string_fmt = colour_set_string_fg_fmt ++ colour_set_string_bg_fmt;
+
 pub const colour_end_string_fmt = "\x1B[0m";
 
 /// a coloured string type
 pub const String = struct {
     const Self = @This();
     /// this is the colour behind the text
-    colour_bg: Colour,
+    colour_bg: ?Colour = null,
     /// this is the colour of the text
-    colour_fg: Colour,
+    colour_fg: ?Colour = null,
     /// the string that gets printed
     string: []const u8,
 
     /// creates a new string with the defualt windows terminal colours
     pub fn init(string: []const u8) Self {
         return Self{
-            .colour_fg = Colour.windowsTerminalFont(),
-            .colour_bg = Colour.windowsTerminalBackground(),
             .string = string,
         };
     }
@@ -28,7 +29,6 @@ pub const String = struct {
     pub fn initWfg(fg_colour: Colour, string: []const u8) Self {
         return Self{
             .colour_fg = fg_colour,
-            .colour_bg = Colour.windowsTerminalBackground(),
             .string = string,
         };
     }
@@ -36,7 +36,6 @@ pub const String = struct {
     /// creates a new string with a given background colour
     pub fn initWbg(bg_colour: Colour, string: []const u8) Self {
         return Self{
-            .colour_fg = Colour.windowsTerminalFont(),
             .colour_bg = bg_colour,
             .string = string,
         };
@@ -78,18 +77,28 @@ pub const String = struct {
         _ = options;
 
         if (fmt.len == 0) {
-            try writer.print(
-                colour_set_string_fmt ++ "{s}" ++ colour_end_string_fmt,
-                .{
-                    self.colour_fg.r,
-                    self.colour_fg.g,
-                    self.colour_fg.b,
-                    self.colour_bg.r,
-                    self.colour_bg.g,
-                    self.colour_bg.b,
-                    self.string,
-                },
-            );
+            if (self.colour_fg) |colour| {
+                try writer.print(
+                    colour_set_string_fg_fmt,
+                    .{
+                        colour.r,
+                        colour.g,
+                        colour.b,
+                    },
+                );
+            }
+            if (self.colour_bg) |colour| {
+                try writer.print(
+                    colour_set_string_bg_fmt,
+                    .{
+                        colour.r,
+                        colour.g,
+                        colour.b,
+                    },
+                );
+            }
+
+            try writer.print("{s}" ++ colour_end_string_fmt, .{self.string});
         } else {
             try writer.print("{s}", .{self.string});
         }
