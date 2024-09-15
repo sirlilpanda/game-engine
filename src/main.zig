@@ -8,8 +8,17 @@ const vec = @import("math/vec.zig");
 const Quaternion = @import("math/quaternion.zig").Quaternion;
 const obj = @import("objects/object.zig");
 const Random = @import("std").rand.Random;
+const logger = @import("utils/logger.zig");
+
+pub const std_options: std.Options = .{
+    .log_level = .debug,
+    .logFn = logger.myLogFn,
+};
+
+const main_logger = std.log.scoped(.main);
 
 pub fn main() !void {
+    main_logger.info("main started", .{});
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
@@ -72,6 +81,7 @@ pub fn main() !void {
 
     var angle: f32 = 0;
 
+    main_logger.info("main loop starting", .{});
     while (!app.shouldStop()) : ({
         angle += 0.001;
     }) {
@@ -97,5 +107,6 @@ pub fn main() !void {
     }
 
     // frees the app
+    main_logger.info("main stopping", .{});
     app.free();
 }
