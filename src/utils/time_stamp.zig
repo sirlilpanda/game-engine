@@ -106,18 +106,18 @@ pub const TimeStamp = struct {
             });
         } else if (std.mem.eql(u8, fmt, "time")) {
             var colour_printer = String.initNoString();
-            colour_printer.setFgColour(Colour.blue());
+            colour_printer.setFgColour(Colour.rangeToColour(0, 24, @intCast(self.hour)));
 
             try writer.print("{start}{d:.2}{end}", .{ colour_printer, self.hour, colour_printer });
 
             try writer.print(":", .{});
 
-            colour_printer.setFgColour(Colour.purple());
+            colour_printer.setFgColour(Colour.rangeToColour(0, 60, @intCast(self.min)));
             try writer.print("{start}{d:.2}{end}", .{ colour_printer, self.min, colour_printer });
 
             try writer.print(".", .{});
 
-            colour_printer.setFgColour(Colour.pink());
+            colour_printer.setFgColour(Colour.rangeToColour(0, 60, @intCast(self.sec)));
             try writer.print("{start}{d:.2}{end}", .{ colour_printer, self.sec, colour_printer });
         } else if (std.mem.eql(u8, fmt, "date")) {
             try writer.print("{d:.4}-{d:.2}-{d:.2}", .{
