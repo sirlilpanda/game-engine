@@ -16,12 +16,20 @@ pub const String = struct {
     /// this is the colour of the text
     colour_fg: ?Colour = null,
     /// the string that gets printed
-    string: []const u8,
+    /// allowing this to be optional to allow for using this to colour other objects
+    string: ?[]const u8,
 
     /// creates a new string with the defualt windows terminal colours
     pub fn init(string: []const u8) Self {
         return Self{
             .string = string,
+        };
+    }
+
+    /// useful if you want to colour some other formatter
+    pub fn initNoString() Self {
+        return Self{
+            .string = null,
         };
     }
 
@@ -77,6 +85,31 @@ pub const String = struct {
         _ = options;
 
         if (fmt.len == 0) {
+            if (self.string) |string| {
+                if (self.colour_fg) |colour| {
+                    try writer.print(
+                        colour_set_string_fg_fmt,
+                        .{
+                            colour.r,
+                            colour.g,
+                            colour.b,
+                        },
+                    );
+                }
+                if (self.colour_bg) |colour| {
+                    try writer.print(
+                        colour_set_string_bg_fmt,
+                        .{
+                            colour.r,
+                            colour.g,
+                            colour.b,
+                        },
+                    );
+                }
+
+                try writer.print("{s}" ++ colour_end_string_fmt, .{string});
+            }
+        } else if (std.mem.eql(u8, fmt, "start")) {
             if (self.colour_fg) |colour| {
                 try writer.print(
                     colour_set_string_fg_fmt,
@@ -97,10 +130,10 @@ pub const String = struct {
                     },
                 );
             }
-
-            try writer.print("{s}" ++ colour_end_string_fmt, .{self.string});
+        } else if (std.mem.eql(u8, fmt, "end")) {
+            try writer.print(colour_end_string_fmt, .{});
         } else {
-            try writer.print("{s}", .{self.string});
+            try writer.print("{?s}", .{self.string});
         }
     }
 };
