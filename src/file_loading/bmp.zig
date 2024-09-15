@@ -5,7 +5,8 @@ const std = @import("std");
 const bmp_logger = std.log.scoped(.Bmp);
 
 const BmpError = error{
-    non_triangluar_mesh,
+    bits_per_pixel_less_than_8_not_supported,
+    bmp_compression_not_supported,
 };
 
 /// the header of the BMP, mainly just holds file data
@@ -167,6 +168,11 @@ pub const Bmp = struct {
         bmp_logger.debug("{s} has size {} x {}", .{ filename, bmp.infoheader.width, bmp.infoheader.height });
         // std.debug.print("infoheader = {any}\n", .{bmp.infoheader});
 
+        if (bmp.infoheader.compression != 0) {
+            bmp_logger.err("bmp doesnt currently support compressed images image {s} has compression {}\n", .{ filename, bmp.infoheader.compression });
+            return BmpError.bmp_compression_not_supported;
+        }
+
         const size: usize =
             @as(usize, @intCast(bmp.infoheader.width)) *
             @as(usize, @intCast(bmp.infoheader.height)) *
@@ -178,7 +184,7 @@ pub const Bmp = struct {
         const data = try alloc.alloc(u8, size);
         if (bmp.infoheader.bits_per_pixel < 8) {
             bmp_logger.err("i cant be fucked supporting bits per pixel less than 8", .{});
-            return BmpError.non_triangluar_mesh;
+            return BmpError.bits_per_pixel_less_than_8_not_supported;
         }
 
         const amount_read = try raw_bmp_file.readAll(data);
