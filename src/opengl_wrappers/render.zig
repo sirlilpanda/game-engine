@@ -23,6 +23,7 @@ pub const Renderer = union(RenderType) {
 };
 
 const logger_render2d = std.log.scoped(.Render_2d);
+
 const logger_render3d = std.log.scoped(.Render_3d);
 
 pub const Render2d = struct {
@@ -108,6 +109,7 @@ pub const Render3d = struct {
         logger_render3d.info("creating new 3d renderer", .{});
 
         gl.genVertexArrays(1, &self.vertex_array_object);
+        // could make this faster if i gen
         gl.genBuffers(1, &self.vertex_buffer_object);
         gl.genBuffers(1, &self.vertex_normal_object);
         gl.genBuffers(1, &self.vertex_index_object);
@@ -181,10 +183,13 @@ pub const Render3d = struct {
     /// destroies all the buffers on the gpu
     pub fn destroy(self: Self) void {
         logger_render3d.info("deleting 3d renderer with id {}", .{self.vertex_array_object});
+        gl.bindVertexArray(self.vertex_array_object);
+
         gl.deleteVertexArrays(1, &self.vertex_array_object);
         gl.deleteBuffers(1, &self.vertex_buffer_object);
         gl.deleteBuffers(1, &self.vertex_normal_object);
         gl.deleteBuffers(1, &self.vertex_index_object);
+        gl.deleteBuffers(1, &self.vertex_texture_object);
     }
 
     /// renders the object
