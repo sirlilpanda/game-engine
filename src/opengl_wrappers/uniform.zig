@@ -1,6 +1,9 @@
 const gl = @import("gl");
 const vec = @import("../math/vec.zig");
 const mat = @import("../math/matrix.zig");
+const std = @import("std");
+
+// const uniform_logger = std.log.scoped(.Uniform);
 
 /// a simple wrapper of a uniform
 pub const Uniform = struct {
