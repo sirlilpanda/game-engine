@@ -63,6 +63,7 @@ pub const Texture = struct {
     /// frees the texture from the GPU
     pub fn destroy(self: Self) void {
         texture_logger.info("[INFO] deleting texture with id {}", .{self.texture_id});
-        gl.deleteTextures(1, self.texture_id);
+        gl.bindTexture(gl.TEXTURE_2D, self.texture_id);
+        gl.deleteTextures(1, &self.texture_id);
     }
 };
