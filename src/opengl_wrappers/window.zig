@@ -110,12 +110,13 @@ pub const Window = struct {
 
     /// saves a screen shot of the current image as a bmp
     pub fn saveImg(self: Self, name: []const u8) !void {
+        std.debug.print("[INFO] saving screenshot {s}\n", .{name});
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
         defer _ = gpa.deinit();
         const allocator = gpa.allocator();
 
         const size = self.window.getSize();
-        std.debug.print("size : {}\n", .{self.window.getSize()});
+        std.debug.print("[INFO] screenshot size {} x {} pixels\n", .{ size.width, size.height });
         var rgb_data = try allocator.alloc(u8, size.height * size.width * 3);
         defer allocator.free(rgb_data);
 
