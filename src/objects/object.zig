@@ -26,6 +26,11 @@ pub const Object = struct {
     /// the texture of the object
     texture: ?tex.Texture,
 
+    /// bounding box max point
+    bounding_box_max_point: ?vec.Vec3 = null,
+    /// bounding box min point
+    bounding_box_min_point: ?vec.Vec3 = null,
+
     /// creates a new object
     pub fn init(v: vec.Vec3) Self {
         return Self{
@@ -34,6 +39,8 @@ pub const Object = struct {
             .scale = vec.Vec3.ones(),
             .render = undefined,
             .texture = null,
+            .bounding_box_max_point = vec.Vec3.ones(),
+            .bounding_box_min_point = vec.Vec3.number(-1),
         };
     }
 
