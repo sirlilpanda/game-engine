@@ -191,7 +191,7 @@ pub fn Vec(comptime length: comptime_int) type {
 
             switch (length) {
                 1 => try writer.print(
-                    "[{start}DIPSHIT{end}]what the fuck are you doing with a vec 1, heres you value, use a fucking float if you want this {start}{}{end}",
+                    "[{start}DIPSHIT{end}]what the fuck are you doing with a vec 1, heres you value, use a fucking float if you want this {start}{d:.4}{end}",
                     .{
                         colour_text,
                         colour_text,
@@ -207,14 +207,14 @@ pub fn Vec(comptime length: comptime_int) type {
                     });
 
                     colour_text.setFgColour(Colour.red());
-                    try writer.print("{start}x : {}{end}, ", .{
+                    try writer.print("{start}x : {d:.4}{end}, ", .{
                         colour_text,
                         self.x(),
                         colour_text,
                     });
 
                     colour_text.setFgColour(Colour.lightBlue());
-                    try writer.print("{start}y : {}{end}]", .{
+                    try writer.print("{start}y : {d:.4}{end}]", .{
                         colour_text,
                         self.y(),
                         colour_text,
@@ -227,21 +227,21 @@ pub fn Vec(comptime length: comptime_int) type {
                     });
 
                     colour_text.setFgColour(Colour.red());
-                    try writer.print("{start}x : {}{end}, ", .{
+                    try writer.print("{start}x : {d:.4}{end}, ", .{
                         colour_text,
                         self.x(),
                         colour_text,
                     });
 
-                    colour_text.setFgColour(Colour.lightBlue());
-                    try writer.print("{start}y : {}{end}, ", .{
+                    colour_text.setFgColour(Colour.green());
+                    try writer.print("{start}y : {d:.4}{end}, ", .{
                         colour_text,
                         self.y(),
                         colour_text,
                     });
 
-                    colour_text.setFgColour(Colour.green());
-                    try writer.print("{start}z : {}{end}]", .{
+                    colour_text.setFgColour(Colour.lightBlue());
+                    try writer.print("{start}z : {d:.4}{end}]", .{
                         colour_text,
                         self.z(),
                         colour_text,
@@ -254,28 +254,28 @@ pub fn Vec(comptime length: comptime_int) type {
                     });
 
                     colour_text.setFgColour(Colour.red());
-                    try writer.print("{start}x : {}{end}, ", .{
+                    try writer.print("{start}x : {d:.4}{end}, ", .{
                         colour_text,
                         self.x(),
                         colour_text,
                     });
 
-                    colour_text.setFgColour(Colour.lightBlue());
-                    try writer.print("{start}y : {}{end}, ", .{
+                    colour_text.setFgColour(Colour.green());
+                    try writer.print("{start}y : {d:.4}{end}, ", .{
                         colour_text,
                         self.y(),
                         colour_text,
                     });
 
-                    colour_text.setFgColour(Colour.green());
-                    try writer.print("{start}z : {}{end}, ", .{
+                    colour_text.setFgColour(Colour.lightBlue());
+                    try writer.print("{start}z : {d:.4}{end}, ", .{
                         colour_text,
                         self.z(),
                         colour_text,
                     });
 
                     colour_text.setFgColour(Colour.yellow());
-                    try writer.print("{start}w : {}{end}]", .{
+                    try writer.print("{start}w : {d:.4}{end}]", .{
                         colour_text,
                         self.w(),
                         colour_text,
@@ -285,14 +285,14 @@ pub fn Vec(comptime length: comptime_int) type {
                     try writer.print("vec({})[", .{length});
                     for (0..length - 1) |dex| {
                         colour_text.setFgColour(Colour.usizeToColour(dex));
-                        try writer.print("{start}{}{end}, ", .{
+                        try writer.print("{start}{d:.4}{end}, ", .{
                             colour_text,
                             self.vec[dex],
                             colour_text,
                         });
                     }
                     colour_text.setFgColour(Colour.usizeToColour(length - 1));
-                    try writer.print("{start}{}{end}]", .{
+                    try writer.print("{start}{d:.4}{end}]", .{
                         colour_text,
                         self.vec[length - 1],
                         colour_text,
