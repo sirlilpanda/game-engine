@@ -2,7 +2,7 @@
 //! however this dont work with the more generic matrixes
 const vect = @import("vec.zig");
 const std = @import("std");
-const ColourPrinter = @import("../console_logger/coloured_text.zig").ColourPrinter;
+const ColourPrinter = @import("../utils/string.zig").String;
 const Colour = @import("../utils/colour.zig").Colour;
 
 pub const Mat3x3 = struct {
@@ -97,7 +97,7 @@ pub const Mat3x3 = struct {
         _ = options;
         var i: usize = 0;
         var j: usize = 0;
-        var colour_text = ColourPrinter.init();
+        var colour_text = ColourPrinter.initNoString();
         try writer.print("mat :\n", .{});
         while (j < 3) : (j += 1) {
             try writer.print("|", .{});

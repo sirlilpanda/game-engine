@@ -13,7 +13,7 @@
 const vect = @import("vec.zig");
 const std = @import("std");
 
-const ColourPrinter = @import("../console_logger/coloured_text.zig").ColourPrinter;
+const ColourPrinter = @import("../utils/string.zig").String;
 const Colour = @import("../utils/colour.zig").Colour;
 
 pub const Mat4x4 = @import("matrix4x4.zig").Mat4x4;
@@ -57,7 +57,7 @@ pub fn Matrix(comptime hight: comptime_int, comptime length: comptime_int) type 
             _ = options;
             var i: usize = 0;
             var j: usize = 0;
-            var colour_text = ColourPrinter.init();
+            var colour_text = ColourPrinter.initNoString();
             try writer.print("mat :\n", .{});
             while (j < m) : (j += 1) {
                 colour_text.setFgColour(Colour.usizeToColour(i + j * n));

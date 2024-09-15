@@ -1,6 +1,6 @@
 //! SIMD optimised vector, can be of any length
 //!
-const ColourPrinter = @import("../console_logger/coloured_text.zig").ColourPrinter;
+const ColourPrinter = @import("../utils/string.zig").String;
 const Colour = @import("../utils/colour.zig").Colour;
 
 pub const VecError = error{
@@ -186,7 +186,7 @@ pub fn Vec(comptime length: comptime_int) type {
         pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
             _ = fmt;
             _ = options;
-            var colour_text = ColourPrinter.init();
+            var colour_text = ColourPrinter.initNoString();
             colour_text.setFgColour(Colour.gold());
 
             switch (length) {
