@@ -1,9 +1,10 @@
 //! this is a service for caching already loaded Textures
 const std = @import("std");
 const Texture = @import("texture.zig").Texture;
-
 const Allocator = std.mem.Allocator;
 const TextureCache = std.StringArrayHashMap(Texture);
+
+const texture_loader_logger = std.log.scoped(.TextureService);
 
 /// singletons are bad boo hoo
 const maded: bool = false;
@@ -29,32 +30,33 @@ pub const TextureService = struct {
     /// loads a new texture, and wont open a file unless its not already in the cache
     pub fn load(self: *Self, texture_path: []const u8) !Texture {
         // ill change this to check the file extention later
-        std.debug.print("[INFO] trying to load : {s}\n", .{texture_path});
+        texture_loader_logger.info("trying to load : {s}", .{texture_path});
         //this is a get or put but that func scares me
         if (self.cache.contains(texture_path)) {
-            std.debug.print("[INFO] texture found, using cached one\n", .{});
+            texture_loader_logger.info("texture found, using cached one", .{});
 
             return self.cache.get(texture_path) orelse undefined; // should always exists
         } else {
-            std.debug.print("[INFO] texture not found, creating new one\n", .{});
+            texture_loader_logger.info("texture not found, creating new one", .{});
 
             const texture: Texture = Texture.init(self.allocator, texture_path) catch |err| {
-                std.debug.print("[ERROR] tried to load {s} got error {any}\n", .{ texture_path, err });
+                texture_loader_logger.err("tried to load {s} got error {any}", .{ texture_path, err });
                 return err;
             };
 
             try self.cache.put(texture_path, texture);
+            texture_loader_logger.info("texture {s} created and now in cache", .{texture_path});
             return texture;
         }
     }
 
     /// frees all the memory
     pub fn deinit(self: *Self) void {
-        std.debug.print("[INFO] unloading texture loader service\n", .{});
+        texture_loader_logger.info("unloading texture loader service", .{});
         for (self.cache.values()) |texture| {
             texture.destroy();
         }
-
+        texture_loader_logger.info("unloading texture loader service cache", .{});
         self.cache.deinit();
     }
 };
