@@ -5,8 +5,6 @@ game engine written in zig, this was made from scratch using a glfw window and o
 ![image form the game engine](screenshot.png)
 
 
-warning i dont think i free everthing correctly yet so your gpu memory may start filling.
-
 # project structure
 
 currently the project has 4 main directories:
@@ -16,7 +14,9 @@ currently the project has 4 main directories:
     - `file_loading` : all the file loading code such as bmp and wavefront object files
     - `math` : where the math is like matrixes and vectors
     - `objects` : 3d game objects and a loading service for them
+    - `textures` : texture wrapper and texture loading service
     - `opengl_wrappers` : wrappers for opengl functions
+    - `utils` : where things that dont fit nicely anywhere else
 - `textures` : this is where all the game textures are stored
 - `objects` : where the 3d objects are stored
 - `shaders` : where the glsl shaders are stored
@@ -30,6 +30,7 @@ currently the project has 4 main directories:
 - an object loading service to cache objects that have already been sent to the gpu
 - Blinn–Phong lighting
 - texture rendering
+- rendering text to the screen
 - screenshots
 - coloured printing to the terimal, makes its easier to read matrixs and vectors
 
@@ -53,6 +54,7 @@ currently there are hard coded controls theses are
 |`left_ctrl`| down|
 |`-`| speed increase|
 |`=`| speed decrease|
+|`alt+f4`| stop |
+|special controls| will only get checked every second |
 |`r`| reload shaders|
-|`esc`| stop |
 |`p`| screen shot|
