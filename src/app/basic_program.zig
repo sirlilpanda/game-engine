@@ -8,41 +8,43 @@ const shader = @import("../opengl_wrappers/shader.zig");
 
 const std = @import("std");
 
-/// this is a very basic program that sends the
-/// model view matrix, the model view projection matrix
-/// the nomral matrix and a light position
-pub const BasicUniforms = struct {
-    const Self = @This();
-    mvMatrixUniform: uni.Uniform = uni.Uniform.init("mvMatrix"),
-    mvpMatrixUniform: uni.Uniform = uni.Uniform.init("mvpMatrix"),
-    norMatrixUniform: uni.Uniform = uni.Uniform.init("norMatrix"),
-    lgtUniform: uni.Uniform = uni.Uniform.init("lightPos"),
+const basic_3d_program_logger = std.log.scoped(.Basic3dProgram);
 
-    pub fn draw(self: Self, camera: *cam.Camera, object: obj.Object) void {
-        // i dont know if this is faster
-        var model = mat.Mat4x4.idenity();
+// /// this is a very basic program that sends the
+// /// model view matrix, the model view projection matrix
+// /// the nomral matrix and a light position
+// pub const BasicUniforms = struct {
+//     const Self = @This();
+//     mvMatrixUniform: uni.Uniform = uni.Uniform.init("mvMatrix"),
+//     mvpMatrixUniform: uni.Uniform = uni.Uniform.init("mvpMatrix"),
+//     norMatrixUniform: uni.Uniform = uni.Uniform.init("norMatrix"),
+//     lgtUniform: uni.Uniform = uni.Uniform.init("lightPos"),
 
-        model = model.mul(mat.Mat4x4.translate(object.pos)).mul(mat.Mat4x4.rotate(object.roation.vec[1], vec.init3(1, 1, 0)));
+//     pub fn draw(self: Self, camera: *cam.Camera, object: obj.Object) void {
+//         // i dont know if this is faster
+//         var model = mat.Mat4x4.idenity();
 
-        const mvMatrix = camera.view_matrix.mul(model);
-        const mvpMatrix = camera.projection_matrix.mul(mvMatrix);
-        const invMatrix = mvMatrix.inverseTranspose();
+//         model = model.mul(mat.Mat4x4.translate(object.pos)).mul(mat.Mat4x4.rotate(object.roation.vec[1], vec.init3(1, 1, 0)));
 
-        //could queue in another thread to speed up times
-        self.mvMatrixUniform.sendMatrix4(false, mvMatrix);
-        self.mvpMatrixUniform.sendMatrix4(false, mvpMatrix);
-        self.norMatrixUniform.sendMatrix4(false, invMatrix);
-        // self.lgtUniform.sendVec4(vec.init4(camera.eye.vec[0], camera.eye.vec[1], camera.eye.vec[2], 0));
-        object.draw();
-    }
+//         const mvMatrix = camera.view_matrix.mul(model);
+//         const mvpMatrix = camera.projection_matrix.mul(mvMatrix);
+//         const invMatrix = mvMatrix.inverseTranspose();
 
-    pub fn reload(self: Self) void {
-        _ = self;
-    }
-};
+//         //could queue in another thread to speed up times
+//         self.mvMatrixUniform.sendMatrix4(false, mvMatrix);
+//         self.mvpMatrixUniform.sendMatrix4(false, mvpMatrix);
+//         self.norMatrixUniform.sendMatrix4(false, invMatrix);
+//         // self.lgtUniform.sendVec4(vec.init4(camera.eye.vec[0], camera.eye.vec[1], camera.eye.vec[2], 0));
+//         object.draw();
+//     }
 
-/// basic program that uses basic uniforms
-pub const BasicProgram = program.Program(BasicUniforms);
+//     pub fn reload(self: Self) void {
+//         _ = self;
+//     }
+// };
+
+// /// basic program that uses basic uniforms
+// pub const BasicProgram = program.Program(BasicUniforms);
 
 /// this is a very basic program that sends the
 /// model view matrix, the model view projection matrix
@@ -88,6 +90,7 @@ pub const BasicUniformsText = struct {
 
     /// reloads the some of the defualt values
     pub fn reload(self: Self) void {
+        basic_3d_program_logger.info("reloading basic 3d program", .{});
         self.hasDiffuseLighting.send1Uint(0);
         self.ambient_colour.sendVec4(vec.init4(0.2, 0.2, 0.2, 1));
         self.obj_colour.sendVec4(vec.init4(1, 1, 1, 1));
@@ -104,6 +107,7 @@ pub const BasicProgramTex = program.Program(BasicUniformsText, 32);
 
 /// init function for the BasicProgramTex program, i keep it here to show how to nicely init new programs
 pub fn createBasicProgramWTexture(allocator: std.mem.Allocator) !BasicProgramTex {
+    basic_3d_program_logger.info("attempting to create basic 3d program", .{});
     var prog = BasicProgramTex.init();
 
     const vert = try shader.Shader.init(allocator, "shaders/crab.vert", .vertex);
@@ -120,5 +124,6 @@ pub fn createBasicProgramWTexture(allocator: std.mem.Allocator) !BasicProgramTex
     prog.uniforms.obj_colour.sendVec4(vec.init4(1, 1, 1, 1));
     prog.uniforms.lgtUniform.sendVec4(light);
 
+    basic_3d_program_logger.info("created basic 3d program", .{});
     return prog;
 }

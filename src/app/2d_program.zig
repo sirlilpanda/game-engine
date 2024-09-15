@@ -9,6 +9,9 @@ const render = @import("../opengl_wrappers/render.zig");
 
 const std = @import("std");
 const gl = @import("gl");
+
+const basic_2d_program_logger = std.log.scoped(.Basic2dProgram);
+
 /// this is a very basic program that sends the
 /// model view matrix, the model view projection matrix
 /// the nomral matrix, a light position, a object colour
@@ -28,6 +31,7 @@ pub const BasicUniforms2d = struct {
 
     /// reloads the some of the defualt values
     pub fn reload(self: Self) void {
+        basic_2d_program_logger.info("reloaded basic 2d program", .{});
         self.colour.sendVec4(vec.Vec4.ones());
     }
 };
@@ -36,6 +40,7 @@ pub const BasicProgram2D = program.Program(BasicUniforms2d, 32);
 
 /// init function for the BasicProgram2D program, i keep it here to show how to nicely init new programs
 pub fn createBasic2DProgram(allocator: std.mem.Allocator) !BasicProgram2D {
+    basic_2d_program_logger.info("attempting to create basic 2d program", .{});
     var prog = BasicProgram2D.init();
 
     const vert = try shader.Shader.init(allocator, "shaders/basic_2d.vert", .vertex);
@@ -46,5 +51,6 @@ pub fn createBasic2DProgram(allocator: std.mem.Allocator) !BasicProgram2D {
     prog.link();
     prog.use();
 
+    basic_2d_program_logger.info("created basic 2d program", .{});
     return prog;
 }

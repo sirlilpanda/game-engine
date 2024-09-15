@@ -14,6 +14,8 @@ const Colour = @import("../utils/colour.zig").Colour;
 const std = @import("std");
 const gl = @import("gl");
 
+const text_rendering_program_logger = std.log.scoped(.TextRenderProgram);
+
 /// make sure this lines up with the ascii table ie A = 65
 /// ill make this more dynamic in the future
 pub const LookUpTable = struct {
@@ -52,7 +54,7 @@ pub const BasicUniformsTextRendering = struct {
 
     aspect_ratio: f32 = 16.0 / 9.0,
     aspect_ratio_correction_scale: vec.Vec2 = vec.Vec2.ones(),
-    text_size: f32 = 0.4,
+    text_size: f32 = 0.2,
     //https://lucide.github.io/Font-Atlas-Generator/
     font_texture_atlas: tex.Texture = undefined,
     wrapping_length: usize = 12,
@@ -102,6 +104,7 @@ pub const BasicUniformsTextRendering = struct {
 
     /// reloads the some of the defualt values
     pub fn reload(self: *Self) void {
+        text_rendering_program_logger.info("reloading text rendering program", .{});
         self.font_texture_atlas.useTexture();
         self.uv_cell_size.sendVec2(vec.init2(
             @as(f32, @floatFromInt(LookUpTable.cell_width)) /
@@ -127,6 +130,7 @@ pub const BasicProgramText = program.Program(BasicUniformsTextRendering, 0);
 
 /// init function for the BasicProgramText program, i keep it here to show how to nicely init new programs
 pub fn createBasicTextProgram(allocator: std.mem.Allocator) !BasicProgramText {
+    text_rendering_program_logger.info("attempting to create text rendering program", .{});
     var prog = BasicProgramText.init();
 
     const vert = try shader.Shader.init(allocator, "shaders/basic_2d.vert", .vertex);
@@ -155,5 +159,6 @@ pub fn createBasicTextProgram(allocator: std.mem.Allocator) !BasicProgramText {
         .texture = null,
     };
 
+    text_rendering_program_logger.info("created text rendering program", .{});
     return prog;
 }

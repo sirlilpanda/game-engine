@@ -28,6 +28,8 @@ const prog_error = error{
 };
 var speed: f32 = 10;
 
+const app_logger = std.log.scoped(.App);
+
 /// the App is where everything lives the GLFW window, the opengl programs
 /// the camera, an allocator, etc. basically this is the final abstraction
 /// layer
@@ -70,6 +72,7 @@ pub fn App(comptime Programs: type) type {
 
         /// creates a new window with the given screen width and height
         pub fn init(screen_width: u32, screen_hight: u32, alloc: Allocator, programs: Programs) !Self {
+            app_logger.info("attempting to create app", .{});
             var self = Self{
                 .window = undefined,
                 .programs = programs,
@@ -98,19 +101,17 @@ pub fn App(comptime Programs: type) type {
             gl.cullFace(gl.BACK); // cull back face
 
             self.text_rendering_program = prog_text.createBasicTextProgram(alloc) catch |err| {
-                std.debug.print("[ERROR] got error creating the text rendering program, error : {any}\n", .{err});
+                app_logger.err("got error creating the text rendering program, error : {any}", .{err});
                 return err;
             };
 
             self.text_rendering_program.uniforms.font_texture_atlas = self.texture_loader_service.load("textures/font_atlas.bmp") catch |err| {
-                std.debug.print("[ERROR] couldnt load font atlas got error : {any}\n", .{err});
+                app_logger.err("couldnt load font atlas got error : {any}", .{err});
                 return err;
             };
 
             self.text_rendering_program.uniforms.addAspectRatio(self.window.getAspectRatio());
-            const some_text = "some text!!";
             try self.text.append(fps_error_str);
-            try self.text.append(some_text);
 
             self.window.hideCursor();
 
@@ -210,12 +211,12 @@ pub fn App(comptime Programs: type) type {
                 self.window.window.getKey(glfw.Key.right_alt) == glfw.Action.press) and
                 self.window.window.getKey(glfw.Key.F4) == glfw.Action.press)
             {
-                std.debug.print("[INFO] closing window with alt-f4\n", .{});
+                app_logger.info("[INFO] closing window with alt-f4", .{});
                 self.window.window.setShouldClose(true);
             }
 
             const buff: []const u8 = std.fmt.allocPrint(self.alloc, "fps:{d:.2}", .{self.fps()}) catch |err| blk: {
-                std.debug.print("[ERROR] failed to alloc print fps got error : {any}\n", .{err});
+                app_logger.err("failed to alloc print fps got error : {any}", .{err});
                 break :blk fps_error_str;
             };
 
@@ -227,7 +228,7 @@ pub fn App(comptime Programs: type) type {
                 if (self.window.window.getKey(glfw.Key.r) == glfw.Action.press) {
                     inline for (std.meta.fields(Programs)) |f| {
                         if (@field(self.programs, f.name).reload() == shader.ShaderErrors.failed_to_compile) {
-                            std.debug.print("[ERROR] shader failed to complie\n", .{});
+                            app_logger.err("shader failed to complie", .{});
                         }
                     }
                 }
@@ -239,10 +240,10 @@ pub fn App(comptime Programs: type) type {
                     defer self.alloc.free(filename);
                     if (std.fs.cwd().access(filename, .{}) == std.fs.Dir.AccessError.FileNotFound) {
                         self.window.saveImg(filename) catch |err| {
-                            std.debug.print("[ERROR] screenshot error : {any}\n", .{err});
+                            app_logger.err("screenshot error : {any}", .{err});
                         };
                     } else {
-                        std.debug.print("[WARN] file {s} already exists\n", .{filename});
+                        app_logger.warn("file {s} already exists", .{filename});
                     }
                 }
                 self.input_lap = time.timestamp();
@@ -251,14 +252,17 @@ pub fn App(comptime Programs: type) type {
 
         /// frees all the programs and unloads other services
         pub fn free(self: *Self) void {
+            app_logger.info("unloading app", .{});
             inline for (std.meta.fields(Programs)) |f| {
                 @field(self.programs, f.name).unload();
             }
+            app_logger.info("unloading app programs", .{});
             self.window.deinit();
             self.obj_loader_service.deinit();
             self.texture_loader_service.deinit();
             self.text_rendering_program.unload();
             self.text.deinit();
+            app_logger.info("unloaded app", .{});
         }
     };
 }
