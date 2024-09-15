@@ -251,15 +251,15 @@ pub fn App(comptime Programs: type) type {
 
         /// frees all the programs and unloads other services
         pub fn free(self: *Self) void {
+            self.obj_loader_service.deinit();
+            self.texture_loader_service.deinit();
+            self.text_rendering_program.unload();
             app_logger.info("unloading app", .{});
             inline for (std.meta.fields(Programs)) |f| {
                 @field(self.programs, f.name).unload();
             }
             app_logger.info("unloading app programs", .{});
             self.window.deinit();
-            self.obj_loader_service.deinit();
-            self.texture_loader_service.deinit();
-            self.text_rendering_program.unload();
             self.text.deinit();
             app_logger.info("unloaded app", .{});
         }
