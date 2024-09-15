@@ -6,7 +6,14 @@ const obj = @import("object.zig");
 const file = @import("../file_loading/loadfile.zig");
 
 const Allocator = std.mem.Allocator;
-const renderCache = std.StringArrayHashMap(render.Renderer);
+
+const RenderCacheType = struct {
+    renderer: render.Renderer,
+    bounding_box_max_point: vec.Vec3,
+    bounding_box_min_point: vec.Vec3,
+};
+
+const renderCache = std.StringArrayHashMap(RenderCacheType);
 
 const object_loader_logger = std.log.scoped(.ObjectService);
 
@@ -42,12 +49,16 @@ pub const ObjectService = struct {
         if (self.cache.contains(object_path)) {
             object_loader_logger.info("renderer found, using cached one", .{});
 
+            const cached = self.cache.get(object_path) orelse undefined;
+
             return obj.Object{
                 .pos = vec.Vec3.zeros(),
                 .roation = vec.Vec3.zeros(),
                 .scale = vec.Vec3.ones(),
-                .render = self.cache.get(object_path) orelse undefined, //[TODO] make a defaul obj for this to load
+                .render = cached.renderer,
                 .texture = null,
+                .bounding_box_max_point = cached.bounding_box_max_point,
+                .bounding_box_min_point = cached.bounding_box_min_point,
             };
         } else {
             object_loader_logger.info("renderer not found, creating new one", .{});
@@ -64,7 +75,12 @@ pub const ObjectService = struct {
 
             try renderer.render_3d.loadFile(obj_file);
 
-            try self.cache.put(object_path, renderer);
+            try self.cache.put(object_path, RenderCacheType{
+                .renderer = renderer,
+                .bounding_box_max_point = obj_file.bounding_box_max_point,
+                .bounding_box_min_point = obj_file.bounding_box_min_point,
+            });
+
             object_loader_logger.info("renderer created from {s} and now in cache", .{object_path});
 
             return obj.Object{
@@ -73,6 +89,8 @@ pub const ObjectService = struct {
                 .scale = vec.Vec3.ones(),
                 .render = renderer,
                 .texture = undefined,
+                .bounding_box_max_point = obj_file.bounding_box_max_point,
+                .bounding_box_min_point = obj_file.bounding_box_min_point,
             };
         }
     }
@@ -80,8 +98,8 @@ pub const ObjectService = struct {
     /// frees all the memory
     pub fn deinit(self: *Self) void {
         object_loader_logger.info("unloading object loader service", .{});
-        for (self.cache.values()) |renderer| {
-            renderer.render_3d.destroy();
+        for (self.cache.values()) |renderer_cache_type| {
+            renderer_cache_type.renderer.render_3d.destroy();
         }
 
         object_loader_logger.info("unloading object loader service cache", .{});
