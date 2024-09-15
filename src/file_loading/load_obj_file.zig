@@ -6,6 +6,8 @@ const mem = std.mem;
 const file = @import("loadfile.zig");
 const vec = @import("../math/vec.zig");
 
+const object_logger = std.log.scoped(.Object);
+
 const parsing_error = error{
     unknown_number_of_slashes,
     only_support_3_vert_faces,
@@ -46,8 +48,14 @@ inline fn getTokenType(line: []const u8) ?token {
 inline fn parseFaceData(line: []const u8) !FaceElements {
     const number_of_slashes = mem.count(u8, line, "/");
     const number_of_elements = mem.count(u8, line, " ");
-    if (number_of_elements != 3) return parsing_error.only_support_3_vert_faces;
+    if (number_of_elements != 3) {
+        object_logger.err("object loading only support triangluar meshes your mesh as {} elements", .{number_of_elements});
+        return parsing_error.only_support_3_vert_faces;
+    }
+    // this really only needs to be done once
     const vertex_normal_check = if (mem.indexOf(u8, line, "//") != null) true else false;
+
+    // object_logger.debug("object file has {s}", .{if (vertex_normal_check) "verts and normal" else "not verts and normas"});
     // std.debug.print("number_of_slashes {}\n", .{number_of_slashes});
     const faceelement = switch (number_of_slashes) {
         0 =>
@@ -143,9 +151,13 @@ inline fn parseFaceData(line: []const u8) !FaceElements {
                     .normal_indexes = normal_indexes,
                 };
             }
+            object_logger.err("line is malformed line : {s}", .{line});
             break :blk parsing_error.malformed_line;
         },
-        else => parsing_error.unknown_number_of_slashes,
+        else => blk: {
+            object_logger.err("unknown number of slashes", .{});
+            break :blk parsing_error.unknown_number_of_slashes;
+        },
     };
     // std.debug.print("{any}\n", .{faceelement});
 
@@ -154,8 +166,9 @@ inline fn parseFaceData(line: []const u8) !FaceElements {
 
 /// loads the given object file
 pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile {
+    object_logger.info("attempting to load object file {s}", .{filename});
     const obj_file: std.fs.File = std.fs.cwd().openFile(filename, .{}) catch |err| {
-        std.debug.print("[ERROR] loading {s} got error {any}\n", .{ filename, err });
+        object_logger.err("loading {s}s got error {any}\n", .{ filename, err });
         return err;
     };
 
@@ -163,8 +176,9 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
     // std.debug.print("end : {}\n", .{file_end});
     const data = try allocator.alloc(u8, @as(usize, file_end));
     defer allocator.free(data);
-    _ = try obj_file.readAll(data);
+    const read = try obj_file.readAll(data);
     // std.debug.print("amount read : {d}\n", .{read});
+    object_logger.debug("read {} bytes of {s}", .{ read, filename });
     var verts = Arraylist(f32).init(allocator);
     defer verts.deinit();
     var normals = Arraylist(f32).init(allocator);
@@ -175,7 +189,8 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
     defer elements.deinit();
 
     var lines = mem.split(u8, data, if (mem.containsAtLeast(u8, data, 1, "\r")) "\r\n" else "\n");
-    while (lines.next()) |line| {
+    var line_number: usize = 0;
+    while (lines.next()) |line| : (line_number += 1) {
         // std.debug.print("{s}\n", .{line});
         const token_type: ?token = getTokenType(line);
         // std.debug.print("token = {any}\n", .{token_type});
@@ -183,7 +198,7 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
         if (token_type) |t| {
             switch (t) {
                 token.comment => {
-                    std.debug.print("[INFO] .obj token type : {s} : \"{s}\"\n", .{ "comment", line });
+                    object_logger.debug(".obj comment at line {}: \"{s}\"", .{ line_number, line });
                 },
                 token.vertex => {
                     // std.debug.print("token type : {s} ", .{"vertex"});
@@ -210,7 +225,7 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
                 },
             }
         } else {
-            std.debug.print("[WARN] token type not found : \"{s}\"\n", .{line});
+            object_logger.warn("token type not found at line {}: \"{s}\"", .{ line_number, line });
         }
     }
 
@@ -248,7 +263,7 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
         }
         // std.debug.print("{any}\n", .{verts_arr});
     }
-
+    object_logger.info("object {s} loaded succesfully", .{filename});
     const ob = file.ObjectFile{
         .verts = verts_arr,
         .normals = normals_arr,

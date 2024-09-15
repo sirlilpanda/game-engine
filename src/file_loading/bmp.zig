@@ -2,6 +2,8 @@
 //! this current implemention does not support colour tables, but does have the option to add them
 const std = @import("std");
 
+const bmp_logger = std.log.scoped(.Bmp);
+
 /// the header of the BMP, mainly just holds file data
 pub const Header = packed struct {
     // should just be BM
@@ -13,6 +15,7 @@ pub const Header = packed struct {
     data_offset: u32,
 
     pub fn arrayToHeader(array: [12]u8) Header {
+        bmp_logger.debug("converting array to header", .{});
         return Header{
             .signature = std.mem.bytesAsValue(u16, array[0..2]).*,
             .file_size = std.mem.bytesAsValue(u32, array[2..6]).*,
@@ -56,6 +59,7 @@ pub const InfoHeader = packed struct {
     important_colors: u32,
 
     pub fn arrayToInfoheader(array: [42]u8) InfoHeader {
+        bmp_logger.debug("converting array to infoheader", .{});
         return InfoHeader{
             .size = std.mem.bytesAsValue(u32, array[2..6]).*,
             .width = std.mem.bytesAsValue(i32, array[6..10]).*,
@@ -94,6 +98,7 @@ pub const Bmp = struct {
 
     /// creates a new bmp struct
     pub fn init(width: i32, height: i32) Self {
+        bmp_logger.info("creating new bmp {} x {}", .{ width, height });
         return Self{
             .header = Header{
                 .file_size = undefined,
@@ -118,25 +123,30 @@ pub const Bmp = struct {
 
     /// updates the data within the header when new data is given
     fn updateHeaders(self: *Self) void {
+        bmp_logger.debug("updating bmp headers", .{});
         self.header.file_size = @as(u32, @intCast(self.data.len)) + self.header.data_offset;
         self.infoheader.image_size = @as(u32, @intCast(self.data.len));
     }
 
     /// sets new image data and updates the info header
     pub fn updateData(self: *Self, data: []u8) void {
+        bmp_logger.debug("updating bmp data", .{});
         self.data = data;
         updateHeaders(self);
     }
 
     /// loads a new bmp file from disk
     pub fn load(alloc: std.mem.Allocator, filename: []const u8) !Self {
-        var bmp: Self = Bmp.init(0, 0);
+        bmp_logger.info("loading new bmp {s}", .{filename});
+        var bmp: Self = undefined;
 
         const current_dir = std.fs.cwd();
         var buffer: [256]u8 = undefined;
 
-        std.debug.print("[INFO] loading file at : {s}\n", .{try current_dir.realpath(filename, &buffer)});
-        const raw_bmp_file: std.fs.File = try current_dir.openFile(filename, .{});
+        const raw_bmp_file: std.fs.File = current_dir.openFile(filename, .{}) catch |err| {
+            bmp_logger.err("loading {s} got error {any}", .{ try current_dir.realpath(filename, &buffer), err });
+            return err;
+        };
         defer raw_bmp_file.close();
         const rbf_reader = raw_bmp_file.reader();
 
@@ -150,6 +160,7 @@ pub const Bmp = struct {
         // std.debug.print("header = {any}\n", .{bmp.header});
 
         bmp.infoheader = InfoHeader.arrayToInfoheader(info_header);
+        bmp_logger.debug("{s} has size {} x {}", .{ filename, bmp.infoheader.width, bmp.infoheader.height });
         // std.debug.print("infoheader = {any}\n", .{bmp.infoheader});
 
         const size: usize =
@@ -162,10 +173,13 @@ pub const Bmp = struct {
 
         const data = try alloc.alloc(u8, size);
         if (bmp.infoheader.bits_per_pixel < 8) {
-            std.debug.print("[ERROR] i cant be fucked supporting bits per pixel less than 8\n", .{});
+            bmp_logger.err("i cant be fucked supporting bits per pixel less than 8", .{});
             std.process.exit(2);
         }
-        _ = try raw_bmp_file.readAll(data);
+        const amount_read = try raw_bmp_file.readAll(data);
+
+        bmp_logger.debug("read {} bytes from file {s}", .{ amount_read, filename });
+
         if (@as(usize, bmp.infoheader.bits_per_pixel / 8) == 3) {
             var idex: usize = 0;
             while (idex < data.len - 3) : (idex += 3) {
@@ -177,17 +191,18 @@ pub const Bmp = struct {
         // std.debug.print("amount size : {}\n", .{size});
         bmp.data = data;
 
+        bmp_logger.info("{s} loaded succesfully", .{filename});
         return bmp;
     }
 
     /// save the bmp file
     /// filename needs the .bmp extention
     pub fn save(self: Self, filename: []const u8) !void {
+        bmp_logger.info("attempting to save {s} as bmp", .{filename});
         const outfile = std.fs.cwd().createFile(filename, .{ .truncate = true }) catch |err| {
-            std.debug.print("[ERROR] {any}\n", .{err});
+            bmp_logger.err("creating {s} gave error : {any}\n", .{ filename, err });
             return err;
         };
-
         defer outfile.close();
         const outfile_writer = outfile.writer();
 
@@ -216,6 +231,7 @@ pub const Bmp = struct {
         }
 
         _ = try outfile.write(self.data);
+        bmp_logger.info("succesfully save {s}", .{filename});
     }
 };
 

@@ -6,6 +6,8 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
+const tga_logger = std.log.scoped(.Tga_file);
+
 /// header of tga file
 const Header = packed struct {
     id_length: u8, //
@@ -33,6 +35,7 @@ pub const Tga = struct {
 
     /// creates a new tga image
     pub fn init(width: u16, height: u16, data: []u8) Self {
+        tga_logger.info("creating new tga with {} x {}", .{ width, height });
         return Self{
             .header = Header{
                 .id_length = 0,
@@ -52,16 +55,19 @@ pub const Tga = struct {
 
     /// updates the data o fthe tga image
     pub fn updateData(self: Self, data: []u8) void {
+        tga_logger.info("updating tga with new data", .{});
         self.data = data;
     }
 
     /// loads a new tga image
     pub fn load(allocator: Allocator, filename: []const u8) !Self {
+        tga_logger.info("loading tga file with name {s}", .{filename});
         const current_dir = std.fs.cwd();
 
         const obj_file: std.fs.File = current_dir.openFile(filename, .{}) catch |err| {
             var buffer: [256]u8 = undefined;
-            std.debug.print("[ERROR] loading {s} : error {any}\n", .{ try current_dir.realpath(filename, &buffer), err });
+
+            tga_logger.err("loading {s} : error {any}", .{ try current_dir.realpath(filename, &buffer), err });
             return err;
         };
 
@@ -72,11 +78,12 @@ pub const Tga = struct {
         const amount: usize = @as(usize, header.height) * @as(usize, header.wdith) * @as(usize, header.bits_per_pixel / 8);
 
         const data = try allocator.alloc(u8, amount);
-        _ = try obj_file.readAll(data);
-        // std.debug.print("amount : {}\n", .{amount});
+        const amount_read = try obj_file.readAll(data);
+        tga_logger.debug("read {} bytes", .{amount_read});
+        // std.debug.print("amount : {}", .{amount});
         // i believe the packet struct size is wrong at it over writes some image data
         std.mem.reverse(u8, data);
-        // std.debug.print("reversed\n", .{});
+        // std.debug.print("reversed", .{});
 
         var row: usize = 0;
         while (row < header.height) : (row += 1) {
@@ -99,15 +106,15 @@ pub const Tga = struct {
     /// save the given tga file to the with the name
     pub fn save(self: Self, name: []const u8) !void {
         const outfile = std.fs.cwd().createFile(name, .{ .truncate = true }) catch |err| {
-            std.debug.print("[ERROR] attempting to create file {s} got error {any}", .{ name, err });
+            tga_logger.err("attempting to create file {s} got error {any}", .{ name, err });
             return err;
         };
-        std.debug.print("len : {}\n", .{std.mem.toBytes(self.header).len});
         _ = try outfile.write(&std.mem.toBytes(self.header));
         _ = try outfile.write(self.data);
         _ = try outfile.write(&[2]u8{ 0, 0 });
         _ = try outfile.write("TRUEVISION-XFILE.");
         _ = try outfile.write(&[1]u8{0});
+        tga_logger.info("saved tga file with name {}", .{name});
     }
 };
 
@@ -116,7 +123,7 @@ test "load_file" {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
     const filename = "screenshot.tga";
-    std.debug.print("filename : {s}\n", .{filename});
+    std.debug.print("filename : {s}", .{filename});
     const file = try Tga.load(allocator, filename);
 
     try file.save("test_rebuild.tga");
