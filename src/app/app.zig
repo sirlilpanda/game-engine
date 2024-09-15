@@ -15,7 +15,6 @@ const render = @import("../opengl_wrappers/render.zig");
 const uni = @import("../opengl_wrappers/uniform.zig");
 const cam = @import("../opengl_wrappers/camera.zig");
 const Window = @import("../opengl_wrappers/window.zig").Window;
-const cprint = @import("../console_logger/coloured_text.zig");
 const obj = @import("../objects/object.zig");
 const file = @import("../file_loading/loadfile.zig");
 const basic = @import("basic_program.zig");
