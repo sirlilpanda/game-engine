@@ -66,6 +66,7 @@ pub const String = struct {
         return self.string;
     }
 
+    /// checks if two colour strings are equal
     pub fn eq(self: Self, other: Self) bool {
         return std.mem.eql(u8, self.string, other.string);
     }
@@ -76,7 +77,7 @@ pub const String = struct {
     pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = options;
 
-        if (fmt.len > 0) {
+        if (fmt.len == 0) {
             try writer.print(
                 colour_set_string_fmt ++ "{s}" ++ colour_end_string_fmt,
                 .{
