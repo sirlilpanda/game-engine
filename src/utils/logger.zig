@@ -1,6 +1,5 @@
 const std = @import("std");
 const String = @import("string.zig").String;
-const str = @import("string.zig");
 const Colour = @import("colour.zig").Colour;
 
 pub fn myLogFn(
