@@ -133,6 +133,40 @@ pub const Colour = struct {
         );
     }
 
+    pub fn pointToColour(point: usize) Colour {
+        const normed_point_hue: u16 = @as(u16, @intFromFloat((@as(f32, @floatFromInt(point)) / @as(f32, @floatFromInt(std.math.maxInt(usize)))) * 255 * 5)) + 255;
+        const normed_point_rgb: u8 = @intCast((normed_point_hue + 1) % 256);
+
+        if (normed_point_hue <= 255 * 2) { //count up
+            return custom(255, normed_point_rgb, 0);
+        }
+        // 0, 255, 0,       255*3
+        if (normed_point_hue <= 255 * 3) { // count down
+            return custom(255 - normed_point_rgb, 255, 0);
+        }
+        // 0, 255, 255,     255*4
+        if (normed_point_hue <= 255 * 4) { // count up
+            return custom(0, 255, normed_point_rgb);
+        }
+        // 0, 0, 255,       255*5
+        if (normed_point_hue <= 255 * 5) { // count down
+            return custom(0, 255 - normed_point_rgb, 255);
+        }
+        // 255, 0, 255,     255*6
+        if (normed_point_hue <= 255 * 6) { // count up
+            return custom(normed_point_rgb, 0, 255);
+        }
+
+        return Colour.white();
+    }
+
+    pub fn rangeToColour(start: usize, end: usize, point: usize) Colour {
+        const delta = end - start;
+        const shifted_point = point - start;
+        const normed_point_pos: usize = (std.math.maxInt(usize) / delta) * shifted_point;
+        return pointToColour(normed_point_pos);
+    }
+
     /// this will return a set colour based on the usize number
     /// how ever at at point it will start to be random
     pub fn usizeToColour(number: usize) Self {
