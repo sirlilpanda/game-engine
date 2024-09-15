@@ -107,6 +107,6 @@ pub fn main() !void {
     }
 
     // frees the app
-    main_logger.info("main stopping", .{});
     app.free();
+    main_logger.info("main stopping", .{});
 }
