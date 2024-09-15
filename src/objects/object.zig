@@ -6,6 +6,8 @@ const ren = @import("../opengl_wrappers/render.zig");
 const tex = @import("../textures/texture.zig");
 const std = @import("std");
 
+const object_logger = std.log.scoped(.Object);
+
 /// current this object type only supports 3d objects
 pub const Object = struct {
     const Self = @This();
@@ -43,6 +45,7 @@ pub const Object = struct {
 
     /// updates the current position
     pub fn updatePos(self: *Self, pos: vec.Vec3) void {
+        object_logger.debug("updated obj pos to {}", .{pos});
         self.pos = pos;
     }
 
