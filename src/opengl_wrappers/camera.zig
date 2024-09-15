@@ -6,6 +6,8 @@ const std = @import("std");
 const gl = @import("gl");
 const program = @import("program.zig");
 
+const camera_logger = std.log.scoped(.Camera);
+
 const CDR: f32 = std.math.pi / 180.0;
 
 const default_look_at = vec.Vec3.number(1);
@@ -36,7 +38,7 @@ pub const Camera = struct {
 
     /// creates a new camera
     pub fn init(fov: f32, aspect: f32, znear: f32, zfar: f32, eye: vec.Vec3) Self {
-        return Self{
+        const self = Self{
             .pitch = 0,
             .yaw = 0,
             .fov = fov,
@@ -58,6 +60,9 @@ pub const Camera = struct {
                 default_up,
             ),
         };
+        camera_logger.debug("created new camera at {}", .{self.eye});
+        // camera_logger.debug("camera projection_matrix {}", .{self.projection_matrix});
+        return self;
     }
 
     inline fn clip(min_val: f32, max_val: f32, val: f32) f32 {
