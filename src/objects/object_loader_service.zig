@@ -8,6 +8,8 @@ const file = @import("../file_loading/loadfile.zig");
 const Allocator = std.mem.Allocator;
 const renderCache = std.StringArrayHashMap(render.Renderer);
 
+const object_loader_logger = std.log.scoped(.ObjectService);
+
 /// currnet support object types
 pub const ObjectType = enum {
     dat,
@@ -35,10 +37,10 @@ pub const ObjectService = struct {
     /// loads a new object, and wont open a file unless its not already in the cache
     pub fn load(self: *Self, object_path: []const u8, obj_type: ObjectType) !obj.Object {
         // ill change this to check the file extention later
-        std.debug.print("[INFO] trying to load : {s}\n", .{object_path});
+        object_loader_logger.info("trying to load : {s}", .{object_path});
         //this is a get or put but that func scares me
         if (self.cache.contains(object_path)) {
-            std.debug.print("[INFO] renderer found, using cached one\n", .{});
+            object_loader_logger.info("renderer found, using cached one", .{});
 
             return obj.Object{
                 .pos = vec.Vec3.zeros(),
@@ -48,7 +50,7 @@ pub const ObjectService = struct {
                 .texture = null,
             };
         } else {
-            std.debug.print("[INFO] renderer not found, creating new one\n", .{});
+            object_loader_logger.info("renderer not found, creating new one", .{});
             var renderer = render.Renderer{
                 .render_3d = render.Render3d.init(),
             };
@@ -56,13 +58,14 @@ pub const ObjectService = struct {
                 ObjectType.dat => file.loadDatFile(self.allocator, object_path),
                 ObjectType.obj => file.loadObjFile(self.allocator, object_path),
             } catch |err| {
-                std.debug.print("[ERROR] tried to load {s} got error {any}\n", .{ object_path, err });
+                object_loader_logger.err("tried to load {s} got error {any}", .{ object_path, err });
                 return err;
             };
 
             try renderer.render_3d.loadFile(obj_file);
 
             try self.cache.put(object_path, renderer);
+            object_loader_logger.info("renderer created from {s} and now in cache", .{object_path});
 
             return obj.Object{
                 .pos = vec.Vec3.zeros(),
@@ -76,11 +79,12 @@ pub const ObjectService = struct {
 
     /// frees all the memory
     pub fn deinit(self: *Self) void {
-        std.debug.print("[INFO] unloading object loader service\n", .{});
+        object_loader_logger.info("unloading object loader service", .{});
         for (self.cache.values()) |renderer| {
             renderer.render_3d.destroy();
         }
 
+        object_loader_logger.info("unloading object loader service cache", .{});
         self.cache.deinit();
     }
 };
