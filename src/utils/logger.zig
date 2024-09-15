@@ -30,36 +30,37 @@ pub fn myLogFn(
             "WARN",
         ),
     };
+    // i shouldnt be doing these at comp time
+    // const prefix = "[" ++ std.fmt.comptimePrint(
+    //     str.colour_set_string_fmt ++ "{s}" ++ str.colour_end_string_fmt,
+    //     .{
+    //         prefix_string.colour_fg.r,
+    //         prefix_string.colour_fg.g,
+    //         prefix_string.colour_fg.b,
+    //         prefix_string.colour_bg.r,
+    //         prefix_string.colour_bg.g,
+    //         prefix_string.colour_bg.b,
+    //         prefix_string.string,
+    //     },
+    // ) ++ "]";
 
-    const prefix = "[" ++ std.fmt.comptimePrint(
-        str.colour_set_string_fmt ++ "{s}" ++ str.colour_end_string_fmt,
-        .{
-            prefix_string.colour_fg.r,
-            prefix_string.colour_fg.g,
-            prefix_string.colour_fg.b,
-            prefix_string.colour_bg.r,
-            prefix_string.colour_bg.g,
-            prefix_string.colour_bg.b,
-            prefix_string.string,
-        },
-    ) ++ "]";
-
-    const scope_prefix = "[" ++ std.fmt.comptimePrint(
-        str.colour_set_string_fmt ++ "{s}" ++ str.colour_end_string_fmt,
-        .{
-            scope_string.colour_fg.r,
-            scope_string.colour_fg.g,
-            scope_string.colour_fg.b,
-            scope_string.colour_bg.r,
-            scope_string.colour_bg.g,
-            scope_string.colour_bg.b,
-            scope_string.string,
-        },
-    ) ++ "]: ";
+    // const scope_prefix = "[" ++ std.fmt.comptimePrint(
+    //     str.colour_set_string_fmt ++ "{s}" ++ str.colour_end_string_fmt,
+    //     .{
+    //         scope_string.colour_fg.r,
+    //         scope_string.colour_fg.g,
+    //         scope_string.colour_fg.b,
+    //         scope_string.colour_bg.r,
+    //         scope_string.colour_bg.g,
+    //         scope_string.colour_bg.b,
+    //         scope_string.string,
+    //     },
+    // ) ++ "]: ";
 
     // Print the message to stderr, silently ignoring any errors
     std.debug.lockStdErr();
     defer std.debug.unlockStdErr();
     const stderr = std.io.getStdErr().writer();
-    nosuspend stderr.print(prefix ++ scope_prefix ++ format ++ "\n", args) catch return;
+    nosuspend stderr.print("[{}][{}]" ++ format ++ "\n", .{prefix_string} ++ .{scope_string} ++ args) catch return;
+    // nosuspend stderr.print(prefix ++ scope_prefix ++ format ++ "\n", args) catch return;
 }
