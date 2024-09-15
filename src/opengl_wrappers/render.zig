@@ -22,6 +22,9 @@ pub const Renderer = union(RenderType) {
     }
 };
 
+const logger_render2d = std.log.scoped(.Render_2d);
+const logger_render3d = std.log.scoped(.Render_3d);
+
 pub const Render2d = struct {
     const Self = @This();
 
@@ -46,7 +49,7 @@ pub const Render2d = struct {
         gl.genVertexArrays(1, &self.vertex_array_object);
         gl.genBuffers(1, &self.vertex_buffer_object);
 
-        std.debug.print("[INFO] creating 2d renderer with id {}\n", .{self.vertex_array_object});
+        logger_render2d.info("creating 2d renderer with id {}", .{self.vertex_array_object});
         gl.bindVertexArray(self.vertex_array_object);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
@@ -102,6 +105,7 @@ pub const Render3d = struct {
             .vertex_index_object = undefined,
             .number_elements = undefined,
         };
+        logger_render3d.info("creating new 3d renderer", .{});
 
         gl.genVertexArrays(1, &self.vertex_array_object);
         gl.genBuffers(1, &self.vertex_buffer_object);
@@ -109,7 +113,7 @@ pub const Render3d = struct {
         gl.genBuffers(1, &self.vertex_index_object);
         gl.genBuffers(1, &self.vertex_texture_object);
 
-        std.debug.print("[INFO] creating 3d renderer with id {}\n", .{self.vertex_array_object});
+        logger_render3d.info("created 3d renderer with id {}", .{self.vertex_array_object});
         // gl.bindVertexArray(self.vertex_array_object);
         // gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
         // gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_normal_object);
@@ -121,6 +125,7 @@ pub const Render3d = struct {
 
     /// loads a new objectFile in to the gpu
     pub fn loadFile(self: *Self, dat: file.ObjectFile) !void {
+        logger_render3d.info("loading object file in to the gpu", .{});
         gl.bindVertexArray(self.vertex_array_object);
         gl.bindBuffer(gl.ARRAY_BUFFER, self.vertex_buffer_object);
         gl.namedBufferData(
@@ -153,8 +158,8 @@ pub const Render3d = struct {
         gl.enableVertexArrayAttrib(self.vertex_array_object, 2);
         gl.vertexAttribPointer(2, 2, gl.FLOAT, gl.FALSE, 0, null);
 
-        // std.debug.print("text : {any}\n", .{dat.texture.len / 2});
-        // std.debug.print("vert : {any}\n", .{dat.verts.len / 3});
+        // std.debug.print("text : {any}", .{dat.texture.len / 2});
+        // std.debug.print("vert : {any}", .{dat.verts.len / 3});
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.vertex_index_object);
         gl.namedBufferData(
             self.vertex_index_object,
@@ -163,8 +168,11 @@ pub const Render3d = struct {
             gl.STATIC_DRAW,
         );
 
+        logger_render3d.info("sent data to the gpu", .{});
         self.number_elements = dat.elements.len;
 
+        logger_render3d.info("unloading object data", .{});
+        logger_render3d.debug("this unload may not occur in the future", .{});
         dat.unload();
 
         gl.bindVertexArray(self.vertex_array_object);
@@ -172,7 +180,7 @@ pub const Render3d = struct {
 
     /// destroies all the buffers on the gpu
     pub fn destroy(self: Self) void {
-        std.debug.print("[INFO] deleting 3d renderer with id {}\n", .{self.vertex_array_object});
+        logger_render3d.info("deleting 3d renderer with id {}", .{self.vertex_array_object});
         gl.deleteVertexArrays(1, &self.vertex_array_object);
         gl.deleteBuffers(1, &self.vertex_buffer_object);
         gl.deleteBuffers(1, &self.vertex_normal_object);
