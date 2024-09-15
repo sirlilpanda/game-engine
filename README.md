@@ -33,6 +33,7 @@ currently the project has 4 main directories:
 - rendering text to the screen
 - screenshots
 - coloured printing to the terimal, makes its easier to read matrixs and vectors
+- logging with coloured printing
 
 ## the engine also supports more advance fetures such as:
 - allowing multiple opengl programs
