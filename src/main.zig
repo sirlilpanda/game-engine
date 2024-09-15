@@ -50,19 +50,18 @@ pub fn main() !void {
     var sphere = try app.obj_loader_service.load("objects/donut.obj", .obj);
     sphere.texture = try app.texture_loader_service.load("textures/Earth.bmp");
     for (app.programs.basic_program_texture.objects, 0..) |_, dex| {
-        var ject: obj.Object = undefined;
+        var ject: obj.Object = crab;
 
-        ject = crab;
-        ject.pos = vec.init3(
+        ject.updatePos(vec.init3(
             2 * @sin(@as(f32, @floatFromInt(dex))),
             0,
             2 * @cos(@as(f32, @floatFromInt(dex))),
-        );
-        ject.roation = vec.init3(
+        ));
+        ject.updateRoation(vec.init3(
             2 * @sin(@as(f32, @floatFromInt(dex))),
             2 * @cos(@as(f32, @floatFromInt(dex))),
             0,
-        );
+        ));
         app.programs.basic_program_texture.objects[dex] = ject;
     }
 
@@ -71,7 +70,7 @@ pub fn main() !void {
     app.programs.basic_program_texture.objects[0].?.colour = vec.init4(2, 2, 2, 1);
 
     app.programs.basic_program_texture.objects[1] = sphere;
-    app.programs.basic_program_texture.objects[1].?.pos = vec.init3(0, -0.2, 0);
+    app.programs.basic_program_texture.objects[1].?.updatePos(vec.init3(0, -0.2, 0));
 
     app.programs.basic_program_texture.objects[1].?.scale = vec.init3(1, 1, 1);
     app.programs.basic_program_texture.objects[1].?.colour = vec.init4(1, 0, 1, 1);
