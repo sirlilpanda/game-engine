@@ -1,7 +1,7 @@
 const std = @import("std");
 const String = @import("string.zig").String;
 const Colour = @import("colour.zig").Colour;
-
+const TimeStamp = @import("time_stamp.zig").TimeStamp;
 pub fn myLogFn(
     comptime level: std.log.Level,
     comptime scope: @Type(.EnumLiteral),
@@ -31,10 +31,11 @@ pub fn myLogFn(
         ),
     };
 
+    const time = TimeStamp.current();
     // Print the message to stderr, silently ignoring any errors
     std.debug.lockStdErr();
     defer std.debug.unlockStdErr();
     const stderr = std.io.getStdErr().writer();
-    nosuspend stderr.print("[{}][{}] " ++ format ++ "\n", .{prefix_string} ++ .{scope_string} ++ args) catch return;
+    nosuspend stderr.print("[{}][{}][{time}] " ++ format ++ "\n", .{prefix_string} ++ .{scope_string} ++ .{time} ++ args) catch return;
     // nosuspend stderr.print(prefix ++ scope_prefix ++ format ++ "\n", args) catch return;
 }
