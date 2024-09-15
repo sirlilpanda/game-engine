@@ -114,6 +114,17 @@ pub const Colour = struct {
         return Self{ .r = scale, .g = scale, .b = scale };
     }
 
+    /// this is the background colour of the defualt windows terminal
+    pub fn windowsTerminalBackground() Self {
+        return greyScale(12);
+    }
+
+    /// this is the colour of the defualt windows terminal front
+    pub fn windowsTerminalFont() Self {
+        return greyScale(204);
+    }
+
+    /// returns the normised colour between [0, 1]
     pub fn norm(self: Self) vec.Vec3 {
         return vec.init3(
             @as(f32, @floatFromInt(self.r)) / 255.0,
@@ -146,6 +157,7 @@ pub const Colour = struct {
         };
     }
 
+    /// returns a random colour
     pub fn random() Self {
         const static = struct {
             var prng = std.rand.DefaultPrng.init(69420);
