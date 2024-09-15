@@ -10,9 +10,10 @@ pub fn myLogFn(
     args: anytype,
 ) void {
     // i will determine the colour of this from the string its self in the future
-    const scope_string = comptime String.initWfg(Colour.pink(), @tagName(scope));
+    // makes no differnce if these are comptime or not, might blaot the bin tho
+    const scope_string = String.initWfg(Colour.pink(), @tagName(scope));
 
-    const prefix_string = comptime switch (level) {
+    const prefix_string = switch (level) {
         .err => String.initWfg(
             Colour.red(),
             "ERROR",
@@ -30,32 +31,6 @@ pub fn myLogFn(
             "WARN",
         ),
     };
-    // i shouldnt be doing these at comp time
-    // const prefix = "[" ++ std.fmt.comptimePrint(
-    //     str.colour_set_string_fmt ++ "{s}" ++ str.colour_end_string_fmt,
-    //     .{
-    //         prefix_string.colour_fg.r,
-    //         prefix_string.colour_fg.g,
-    //         prefix_string.colour_fg.b,
-    //         prefix_string.colour_bg.r,
-    //         prefix_string.colour_bg.g,
-    //         prefix_string.colour_bg.b,
-    //         prefix_string.string,
-    //     },
-    // ) ++ "]";
-
-    // const scope_prefix = "[" ++ std.fmt.comptimePrint(
-    //     str.colour_set_string_fmt ++ "{s}" ++ str.colour_end_string_fmt,
-    //     .{
-    //         scope_string.colour_fg.r,
-    //         scope_string.colour_fg.g,
-    //         scope_string.colour_fg.b,
-    //         scope_string.colour_bg.r,
-    //         scope_string.colour_bg.g,
-    //         scope_string.colour_bg.b,
-    //         scope_string.string,
-    //     },
-    // ) ++ "]: ";
 
     // Print the message to stderr, silently ignoring any errors
     std.debug.lockStdErr();
