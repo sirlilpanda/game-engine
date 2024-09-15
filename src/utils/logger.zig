@@ -35,6 +35,6 @@ pub fn myLogFn(
     std.debug.lockStdErr();
     defer std.debug.unlockStdErr();
     const stderr = std.io.getStdErr().writer();
-    nosuspend stderr.print("[{}][{}]" ++ format ++ "\n", .{prefix_string} ++ .{scope_string} ++ args) catch return;
+    nosuspend stderr.print("[{}][{}] " ++ format ++ "\n", .{prefix_string} ++ .{scope_string} ++ args) catch return;
     // nosuspend stderr.print(prefix ++ scope_prefix ++ format ++ "\n", args) catch return;
 }
