@@ -1,5 +1,5 @@
 const std = @import("std");
-
+const vec = @import("../math/vec.zig");
 /// colour type
 pub const Colour = struct {
     const Self = @This();
@@ -112,6 +112,14 @@ pub const Colour = struct {
     pub fn greyScale(scale: u8) Self {
         // 255 max
         return Self{ .r = scale, .g = scale, .b = scale };
+    }
+
+    pub fn norm(self: Self) vec.Vec3 {
+        return vec.init3(
+            @as(f32, @floatFromInt(self.r)) / 255.0,
+            @as(f32, @floatFromInt(self.g)) / 255.0,
+            @as(f32, @floatFromInt(self.b)) / 255.0,
+        );
     }
 
     /// this will return a set colour based on the usize number

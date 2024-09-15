@@ -10,7 +10,7 @@ const vec = @import("../math/vec.zig");
 const shader = @import("../opengl_wrappers/shader.zig");
 const render = @import("../opengl_wrappers/render.zig");
 const tex = @import("../textures/texture.zig");
-
+const Colour = @import("../utils/colour.zig").Colour;
 const std = @import("std");
 const gl = @import("gl");
 
@@ -52,27 +52,37 @@ pub const BasicUniformsTextRendering = struct {
 
     aspect_ratio: f32 = 16.0 / 9.0,
     aspect_ratio_correction_scale: vec.Vec2 = vec.Vec2.ones(),
+    text_size: f32 = 0.4,
     //https://lucide.github.io/Font-Atlas-Generator/
     font_texture_atlas: tex.Texture = undefined,
     wrapping_length: usize = 12,
-    text: []const u8 = "text",
 
-    /// i will change what text is
-    pub fn draw(self: Self, camera: *cam.Camera, object: obj.Object) void {
-        _ = camera;
-        self.font_texture_atlas.useTexture();
-        self.colour.sendVec4(vec.Vec4.ones());
+    char_quad: obj.Object = undefined,
 
-        const relitive_scale = vec.init2(0.2, 0.2);
+    pub fn render_text(self: Self, text: []const u8, line: usize) void {
+        self.font_texture_atlas.useTexture(); // make sure you use the font texture
+
+        const normed_colour = Colour.red().norm();
+        self.colour.sendVec4(vec.init4(normed_colour.x(), normed_colour.y(), normed_colour.z(), 1));
+
+        const relitive_scale = self.aspect_ratio_correction_scale.mul(
+            vec.init2(self.text_size, self.text_size),
+        );
+
         self.scale.sendVec2(vec.init2(0.1, 0.1));
-        var relitive_pos = vec.init2(0, -relitive_scale.y() * 4);
-        for (self.text, 0..) |char, dex| {
-            const uv_pos = LookUpTable.u8ToTextureUV(char);
-            self.uv_pos.sendVec2(uv_pos);
-            self.pos.sendVec2(relitive_pos);
-            gl.disable(gl.DEPTH_TEST);
-            object.render.render_2d.render();
-            gl.enable(gl.DEPTH_TEST);
+
+        var relitive_pos = vec.init2(0, -relitive_scale.y() * 4 * @as(f32, @floatFromInt(line + 1)));
+
+        for (text, 0..) |char, dex| {
+            if (char != ' ' or char != '\n') {
+                const uv_pos = LookUpTable.u8ToTextureUV(char);
+                self.uv_pos.sendVec2(uv_pos);
+                self.pos.sendVec2(relitive_pos);
+                gl.disable(gl.DEPTH_TEST);
+                self.char_quad.render.render_2d.render();
+                gl.enable(gl.DEPTH_TEST);
+            }
+
             if ((dex + 1) % self.wrapping_length == 0) {
                 relitive_pos = relitive_pos.add(vec.init2(0, -relitive_scale.y() * 4));
                 relitive_pos.set_x(0);
@@ -82,15 +92,17 @@ pub const BasicUniformsTextRendering = struct {
         }
     }
 
+    /// i will change what text is
+    pub fn draw(self: Self, camera: *cam.Camera, object: obj.Object) void {
+        _ = camera;
+        _ = self;
+        _ = object;
+        @compileError("text rendering does not support the draw function, use the renderText function instead");
+    }
+
     /// reloads the some of the defualt values
     pub fn reload(self: *Self) void {
         self.font_texture_atlas.useTexture();
-        if (self.aspect_ratio > 1) {
-            self.aspect_ratio_correction_scale = vec.init2(1, self.aspect_ratio);
-        } else {
-            self.aspect_ratio_correction_scale = vec.init2(self.aspect_ratio, 1);
-        }
-
         self.uv_cell_size.sendVec2(vec.init2(
             @as(f32, @floatFromInt(LookUpTable.cell_width)) /
                 @as(f32, @floatFromInt(LookUpTable.width)),
@@ -99,10 +111,19 @@ pub const BasicUniformsTextRendering = struct {
         ));
         self.colour.sendVec4(vec.Vec4.ones());
     }
+
+    pub fn addAspectRatio(self: *Self, aspect_ratio: f32) void {
+        self.aspect_ratio = aspect_ratio;
+        if (self.aspect_ratio > 1) {
+            self.aspect_ratio_correction_scale = vec.init2(self.aspect_ratio, 1);
+        } else {
+            self.aspect_ratio_correction_scale = vec.init2(1, self.aspect_ratio);
+        }
+    }
 };
 
 /// this will benifit from batch rendering but i will do that later
-pub const BasicProgramText = program.Program(BasicUniformsTextRendering, 1);
+pub const BasicProgramText = program.Program(BasicUniformsTextRendering, 0);
 
 /// init function for the BasicProgramText program, i keep it here to show how to nicely init new programs
 pub fn createBasicTextProgram(allocator: std.mem.Allocator) !BasicProgramText {
@@ -124,7 +145,7 @@ pub fn createBasicTextProgram(allocator: std.mem.Allocator) !BasicProgramText {
     ));
     prog.uniforms.colour.sendVec4(vec.Vec4.ones());
 
-    prog.objects[0] = obj.Object{
+    prog.uniforms.char_quad = obj.Object{
         .pos = vec.Vec3.zeros(),
         .roation = vec.Vec3.zeros(),
         .scale = vec.Vec3.ones(),

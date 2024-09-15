@@ -61,12 +61,12 @@ pub fn App(comptime Programs: type) type {
         timer: time.Timer,
         /// for making sure inputs to get pushed to much
         input_lap: i64 = 0,
+        /// text renderer
+        text_rendering_program: prog_text.BasicProgramText,
+        /// text to render
+        text: std.ArrayList([]const u8),
 
-        // [TODO] work out how to write this
-        // fn check_prog_struct(self: Self) void {
-        //     inline for (std.meta.fields(Programs)) |f| {
-        //     }
-        // }
+        const fps_error_str = "fps :             ";
 
         /// creates a new window with the given screen width and height
         pub fn init(screen_width: u32, screen_hight: u32, alloc: Allocator, programs: Programs) !Self {
@@ -80,6 +80,8 @@ pub fn App(comptime Programs: type) type {
                 .alloc = alloc,
                 .delta_time = 0,
                 .timer = try time.Timer.start(),
+                .text_rendering_program = undefined,
+                .text = std.ArrayList([]const u8).init(alloc),
             };
 
             self.window = try Window.init(screen_width, screen_hight);
@@ -94,6 +96,21 @@ pub fn App(comptime Programs: type) type {
             gl.clearColor(0, 0, 0, 1);
             gl.enable(gl.DEPTH_TEST); // cull face
             gl.cullFace(gl.BACK); // cull back face
+
+            self.text_rendering_program = prog_text.createBasicTextProgram(alloc) catch |err| {
+                std.debug.print("[ERROR] got error creating the text rendering program, error : {any}\n", .{err});
+                return err;
+            };
+
+            self.text_rendering_program.uniforms.font_texture_atlas = self.texture_loader_service.load("textures/font_atlas.bmp") catch |err| {
+                std.debug.print("[ERROR] couldnt load font atlas got error : {any}\n", .{err});
+                return err;
+            };
+
+            self.text_rendering_program.uniforms.addAspectRatio(self.window.getAspectRatio());
+            const some_text = "some text!!";
+            try self.text.append(fps_error_str);
+            try self.text.append(some_text);
 
             self.window.hideCursor();
 
@@ -142,6 +159,13 @@ pub fn App(comptime Programs: type) type {
                     std.process.exit(1);
                 }
             }
+
+            // always renders text at the end so its on top
+            self.text_rendering_program.use();
+            for (self.text.items, 0..) |string, line| {
+                self.text_rendering_program.uniforms.render_text(string, line);
+            }
+
             self.window.swapBuffer();
 
             // gl.flush();
@@ -182,11 +206,24 @@ pub fn App(comptime Programs: type) type {
 
             self.camera.updateFps(dir);
 
-            if (self.window.window.getKey(glfw.Key.escape) == glfw.Action.press) {
+            if ((self.window.window.getKey(glfw.Key.left_alt) == glfw.Action.press or
+                self.window.window.getKey(glfw.Key.right_alt) == glfw.Action.press) and
+                self.window.window.getKey(glfw.Key.F4) == glfw.Action.press)
+            {
+                std.debug.print("[INFO] closing window with alt-f4\n", .{});
                 self.window.window.setShouldClose(true);
             }
 
-            if (self.input_lap + 2 <= time.timestamp()) {
+            const buff: []const u8 = std.fmt.allocPrint(self.alloc, "fps:{d:.2}", .{self.fps()}) catch |err| blk: {
+                std.debug.print("[ERROR] failed to alloc print fps got error : {any}\n", .{err});
+                break :blk fps_error_str;
+            };
+
+            std.mem.copyForwards(u8, @constCast(self.text.items[0]), buff);
+
+            self.alloc.free(buff);
+
+            if (self.input_lap + 1 <= time.timestamp()) {
                 if (self.window.window.getKey(glfw.Key.r) == glfw.Action.press) {
                     inline for (std.meta.fields(Programs)) |f| {
                         if (@field(self.programs, f.name).reload() == shader.ShaderErrors.failed_to_compile) {
@@ -220,6 +257,8 @@ pub fn App(comptime Programs: type) type {
             self.window.deinit();
             self.obj_loader_service.deinit();
             self.texture_loader_service.deinit();
+            self.text_rendering_program.unload();
+            self.text.deinit();
         }
     };
 }
@@ -230,7 +269,6 @@ pub fn App(comptime Programs: type) type {
 pub const BasicPrograms = struct {
     basic_program_texture: basic.BasicProgramTex,
     basic_program_2d: prog_2d.BasicProgram2D,
-    basic_program_text: prog_text.BasicProgramText,
 };
 
 /// the type of a basic app that uses the BasicProgramTex program
