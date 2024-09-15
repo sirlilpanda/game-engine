@@ -2,6 +2,7 @@ const std = @import("std");
 const String = @import("string.zig").String;
 const Colour = @import("colour.zig").Colour;
 const TimeStamp = @import("time_stamp.zig").TimeStamp;
+
 pub fn myLogFn(
     comptime level: std.log.Level,
     comptime scope: @Type(.EnumLiteral),
@@ -10,7 +11,11 @@ pub fn myLogFn(
 ) void {
     // i will determine the colour of this from the string its self in the future
     // makes no differnce if these are comptime or not, might blaot the bin tho
-    const scope_string = String.initWfg(Colour.pink(), @tagName(scope));
+
+    const scope_string = String.initWfg(
+        Colour.pointToColour(comptime std.hash_map.hashString(@tagName(scope))),
+        @tagName(scope),
+    );
 
     const prefix_string = switch (level) {
         .err => String.initWfg(
