@@ -1,6 +1,7 @@
 const time = @import("std").time;
 const std = @import("std");
-
+const String = @import("string.zig").String;
+const Colour = @import("colour.zig").Colour;
 pub const TimeStamp = struct {
     const Self = @This();
 
@@ -102,6 +103,27 @@ pub const TimeStamp = struct {
                 self.hour,
                 self.min,
                 self.sec,
+            });
+        } else if (std.mem.eql(u8, fmt, "time")) {
+            var colour_printer = String.initNoString();
+            colour_printer.setFgColour(Colour.blue());
+
+            try writer.print("{start}{d:.2}{end}", .{ colour_printer, self.hour, colour_printer });
+
+            try writer.print(":", .{});
+
+            colour_printer.setFgColour(Colour.purple());
+            try writer.print("{start}{d:.2}{end}", .{ colour_printer, self.min, colour_printer });
+
+            try writer.print(".", .{});
+
+            colour_printer.setFgColour(Colour.pink());
+            try writer.print("{start}{d:.2}{end}", .{ colour_printer, self.sec, colour_printer });
+        } else if (std.mem.eql(u8, fmt, "date")) {
+            try writer.print("{d:.4}-{d:.2}-{d:.2}", .{
+                self.day,
+                self.month,
+                self.year,
             });
         } else {
             try writer.print("{d:.4}-{d:.2}-{d:.2}_{d:.2}:{d:.2}:{d:.2}", .{
