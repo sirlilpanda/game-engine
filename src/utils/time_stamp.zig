@@ -2,6 +2,8 @@ const time = @import("std").time;
 const std = @import("std");
 const String = @import("string.zig").String;
 const Colour = @import("colour.zig").Colour;
+const builtin = @import("builtin");
+
 pub const TimeStamp = struct {
     const Self = @This();
 
@@ -74,8 +76,9 @@ pub const TimeStamp = struct {
         const day: u64 = temp_time_stamp / 86400 + 1;
         temp_time_stamp %= 86400;
 
-        const hour: u64 = temp_time_stamp / 3600;
+        var hour: u64 = temp_time_stamp / 3600;
         temp_time_stamp %= 3600;
+        hour +%= 12;
 
         const min: u64 = temp_time_stamp / 60;
         temp_time_stamp %= 60;
@@ -86,7 +89,7 @@ pub const TimeStamp = struct {
             .millisec = 0,
             .sec = sec,
             .min = min,
-            .hour = hour + 12,
+            .hour = hour,
             .day = day,
             .month = month,
             .year = year,
@@ -106,7 +109,7 @@ pub const TimeStamp = struct {
             });
         } else if (std.mem.eql(u8, fmt, "time")) {
             var colour_printer = String.initNoString();
-            colour_printer.setFgColour(Colour.rangeToColour(0, 24, @intCast(self.hour)));
+            colour_printer.setFgColour(Colour.rangeToColour(0, 23, @intCast(self.hour)));
 
             try writer.print("{start}{d:.2}{end}", .{ colour_printer, self.hour, colour_printer });
 
