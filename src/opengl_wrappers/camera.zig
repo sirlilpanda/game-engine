@@ -77,16 +77,25 @@ pub const Camera = struct {
     ///  y : up/down
     ///  z : right/left
     pub fn updateFps(self: *Self, direction: vec.Vec3) void {
+        camera_logger.debug("camera pitch : {}", .{self.pitch});
         self.pitch = clip(-89.99, 89.99, self.pitch);
 
+        camera_logger.debug("clipped bitch : {}", .{self.pitch});
+        // camera_logger.debug("{}", args: anytype)
+        camera_logger.debug("camera pos : {}", .{self.eye});
+        camera_logger.debug("camera look at : {}", .{self.look_at_point});
         self.eye.vec[0] += direction.vec[0] * @sin(self.yaw * CDR) - direction.vec[2] * @cos(self.yaw * CDR);
         self.eye.vec[1] += direction.vec[1];
         self.eye.vec[2] += direction.vec[0] * @cos(self.yaw * CDR) + direction.vec[2] * @sin(self.yaw * CDR);
+        camera_logger.debug("camera pos after dir : {}", .{self.eye});
 
+        // camera_logger.debug("{}", args: anytype)
         self.look_at_point.vec[0] = self.eye.vec[0] + (@sin(self.yaw * CDR));
-        self.look_at_point.vec[1] = self.eye.vec[1] + (@tan(self.pitch * CDR)) + direction.vec[1];
+        self.look_at_point.vec[1] = self.eye.vec[1] + (@tan(self.pitch * CDR));
         self.look_at_point.vec[2] = self.eye.vec[2] + (@cos(self.yaw * CDR));
+        camera_logger.debug("camera look at after dir : {}", .{self.look_at_point});
 
+        // camera_logger.debug("{}", args: anytype)
         self.view_matrix = mat.Mat4x4.lookAt(
             self.eye,
             self.look_at_point,
