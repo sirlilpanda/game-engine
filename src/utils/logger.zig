@@ -11,9 +11,11 @@ pub fn myLogFn(
 ) void {
     // i will determine the colour of this from the string its self in the future
     // makes no differnce if these are comptime or not, might blaot the bin tho
+    const colour_hash = (comptime std.hash_map.hashString(@tagName(scope)));
+    const colour: u8 = @intCast(colour_hash & std.math.maxInt(u8));
 
     const scope_string = String.initWfg(
-        Colour.pointToColour(comptime std.hash_map.hashString(@tagName(scope))),
+        Colour.pointToColour(colour),
         @tagName(scope),
     );
 
