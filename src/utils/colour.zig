@@ -163,8 +163,9 @@ pub const Colour = struct {
 
     pub fn rangeToColour(start: usize, end: usize, point: usize) Colour {
         const delta = end - start;
-        const shifted_point = point - start;
-        const normed_point_pos: usize = (std.math.maxInt(usize) / delta) * shifted_point;
+        const shifted_point: usize = point - start;
+        // wrapping mul to insure that this will never overflow
+        const normed_point_pos: usize = (std.math.maxInt(usize) / delta) *% shifted_point;
         return pointToColour(normed_point_pos);
     }
 
