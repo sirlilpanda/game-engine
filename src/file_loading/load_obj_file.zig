@@ -190,6 +190,10 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
 
     var lines = mem.split(u8, data, if (mem.containsAtLeast(u8, data, 1, "\r")) "\r\n" else "\n");
     var line_number: usize = 0;
+
+    var mins: vec.Vec3 = vec.Vec3.number(std.math.floatMax(f32));
+    var maxs: vec.Vec3 = vec.Vec3.number(std.math.floatMin(f32));
+
     while (lines.next()) |line| : (line_number += 1) {
         // std.debug.print("{s}\n", .{line});
         const token_type: ?token = getTokenType(line);
@@ -203,9 +207,22 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
                 token.vertex => {
                     // std.debug.print("token type : {s} ", .{"vertex"});
                     var dat = mem.split(u8, line[2..], " ");
-                    try verts.append(try std.fmt.parseFloat(f32, dat.first()));
-                    try verts.append(try std.fmt.parseFloat(f32, dat.next() orelse "0"));
-                    try verts.append(try std.fmt.parseFloat(f32, dat.next() orelse "0"));
+
+                    const x: f32 = try std.fmt.parseFloat(f32, dat.first());
+                    const y: f32 = try std.fmt.parseFloat(f32, dat.next() orelse "0");
+                    const z: f32 = try std.fmt.parseFloat(f32, dat.next() orelse "0");
+
+                    if (x < mins.x()) mins.set_x(x);
+                    if (y < mins.y()) mins.set_y(y);
+                    if (z < mins.z()) mins.set_z(z);
+
+                    if (x > maxs.x()) maxs.set_x(x);
+                    if (y > maxs.y()) maxs.set_y(y);
+                    if (z > maxs.z()) maxs.set_z(z);
+
+                    try verts.append(x);
+                    try verts.append(y);
+                    try verts.append(z);
                 },
                 token.vertex_normal => {
                     // std.debug.print("token type : {s} ", .{"vertex_normal"});
@@ -240,6 +257,7 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
     var texture_arr = try allocator.alloc(f32, elements.items.len * 2 * 3); // will be aligned with the verts array
     var elements_arr = try allocator.alloc(u32, num_elements);
 
+    object_logger.debug("object {s} copying elements in to object struct", .{filename});
     for (elements.items, 0..) |element, i| {
         var j: u32 = 0;
         while (j < 9) : (j += 1)
@@ -270,7 +288,11 @@ pub fn loadObjFile(allocator: Allocator, filename: []const u8) !file.ObjectFile 
         .elements = elements_arr,
         .texture = texture_arr,
         .allocator = allocator,
+        .bounding_box_max_point = maxs,
+        .bounding_box_min_point = mins,
     };
+
+    object_logger.debug("bounding box max point {}, min point {}", .{ maxs, mins });
     return ob;
 }
 

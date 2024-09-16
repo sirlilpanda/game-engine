@@ -1,6 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const Allocator = std.mem.Allocator;
+const vec = @import("../math/vec.zig");
 const mem = std.mem;
 
 pub usingnamespace @import("load_data_file.zig");
@@ -23,6 +24,9 @@ pub const ObjectFile = struct {
     elements: []u32,
     /// the texture data, u v
     texture: []f32,
+    ///
+    bounding_box_max_point: vec.Vec3 = vec.Vec3.zeros(),
+    bounding_box_min_point: vec.Vec3 = vec.Vec3.zeros(),
     /// the allocator that is used to load it
     allocator: Allocator,
 
