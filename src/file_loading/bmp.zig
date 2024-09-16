@@ -4,6 +4,10 @@ const std = @import("std");
 
 const bmp_logger = std.log.scoped(.Bmp);
 
+const BmpError = error{
+    non_triangluar_mesh,
+};
+
 /// the header of the BMP, mainly just holds file data
 pub const Header = packed struct {
     // should just be BM
@@ -174,8 +178,9 @@ pub const Bmp = struct {
         const data = try alloc.alloc(u8, size);
         if (bmp.infoheader.bits_per_pixel < 8) {
             bmp_logger.err("i cant be fucked supporting bits per pixel less than 8", .{});
-            std.process.exit(2);
+            return BmpError.non_triangluar_mesh;
         }
+
         const amount_read = try raw_bmp_file.readAll(data);
 
         bmp_logger.debug("read {} bytes from file {s}", .{ amount_read, filename });
