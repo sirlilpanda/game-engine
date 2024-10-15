@@ -81,8 +81,8 @@ pub const Mat4x4 = struct {
             12, 13, 14, 15,
         };
 
-        const v1 = @shuffle(f32, mat2.vec, undefined, mask1);
-        const v2 = @shuffle(f32, mat.vec, undefined, mask2);
+        const v1 = @shuffle(f32, mat.vec, undefined, mask1);
+        const v2 = @shuffle(f32, mat2.vec, undefined, mask2);
         const v3 = v1 * v2; // all the dot products multiplaction steps
 
         const mask3 = @Vector(16, i32){ 0, 1, 2, 3, 16, 17, 18, 19, 32, 33, 34, 35, 48, 49, 50, 51 };
