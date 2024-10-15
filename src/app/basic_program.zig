@@ -69,15 +69,17 @@ pub const BasicUniformsText = struct {
 
         var model = mat.Mat4x4.idenity();
 
-        model = model.mul(mat.Mat4x4.translate(object.pos))
+        model =
+            (mat.Mat4x4.scale(object.scale))
             .mul(mat.Mat4x4.rotate(object.roation.vec[0], vec.init3(1, 0, 0)))
             .mul(mat.Mat4x4.rotate(object.roation.vec[1], vec.init3(0, 1, 0)))
             .mul(mat.Mat4x4.rotate(object.roation.vec[2], vec.init3(0, 0, 1)))
-            .mul(mat.Mat4x4.scale(object.scale));
+            .mul(mat.Mat4x4.translate(object.pos));
+
         self.mMatrixUniform.sendMatrix4(false, model);
 
-        const mvMatrix = camera.view_matrix.mul(model);
-        const mvpMatrix = camera.projection_matrix.mul(mvMatrix);
+        const mvMatrix = model.mul(camera.view_matrix);
+        const mvpMatrix = mvMatrix.mul(camera.projection_matrix);
         const invMatrix = mvMatrix.inverseTranspose();
 
         //could queue in another thread to speed up times
