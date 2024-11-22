@@ -69,13 +69,12 @@ pub const BasicUniformsText = struct {
 
         var model = mat.Mat4x4.idenity();
 
-        model =
-            (mat.Mat4x4.scale(object.scale))
+        model = model
             .mul(mat.Mat4x4.rotate(object.roation.vec[0], vec.init3(1, 0, 0)))
             .mul(mat.Mat4x4.rotate(object.roation.vec[1], vec.init3(0, 1, 0)))
             .mul(mat.Mat4x4.rotate(object.roation.vec[2], vec.init3(0, 0, 1)))
-            .mul(mat.Mat4x4.translate(object.pos));
-
+            .mul(mat.Mat4x4.translate(object.pos))
+            .mul(mat.Mat4x4.scale(object.scale));
         self.mMatrixUniform.sendMatrix4(false, model);
 
         const mvMatrix = model.mul(camera.view_matrix);
@@ -103,9 +102,14 @@ pub const BasicUniformsText = struct {
     pub fn updateLightPos(self: Self, light: vec.Vec3) void {
         self.uniforms.lgtUniform.sendVec4(light);
     }
+
+    pub fn unload(self: Self) void {
+        _ = self;
+        return;
+    }
 };
 
-pub const BasicProgramTex = program.Program(BasicUniformsText, 32);
+pub const BasicProgramTex = program.Program(BasicUniformsText, 256);
 
 /// init function for the BasicProgramTex program, i keep it here to show how to nicely init new programs
 pub fn createBasicProgramWTexture(allocator: std.mem.Allocator) !BasicProgramTex {

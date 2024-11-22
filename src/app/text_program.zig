@@ -60,6 +60,7 @@ pub const BasicUniformsTextRendering = struct {
     wrapping_length: usize = 12,
 
     char_quad: obj.Object = undefined,
+    alloc: std.mem.Allocator = undefined,
 
     pub fn render_text(self: Self, text: []const u8, line: usize) void {
         self.font_texture_atlas.useTexture(); // make sure you use the font texture
@@ -81,7 +82,7 @@ pub const BasicUniformsTextRendering = struct {
                 self.uv_pos.sendVec2(uv_pos);
                 self.pos.sendVec2(relitive_pos);
                 gl.disable(gl.DEPTH_TEST);
-                self.char_quad.render.render_2d.render();
+                self.char_quad.render.drawInstanced();
                 gl.enable(gl.DEPTH_TEST);
             }
 
@@ -123,6 +124,10 @@ pub const BasicUniformsTextRendering = struct {
             self.aspect_ratio_correction_scale = vec.init2(1, self.aspect_ratio);
         }
     }
+
+    pub fn unload(self: Self) void {
+        self.alloc.free(self.char_quad.render.vertex_buffer_objects);
+    }
 };
 
 /// this will benifit from batch rendering but i will do that later
@@ -148,14 +153,13 @@ pub fn createBasicTextProgram(allocator: std.mem.Allocator) !BasicProgramText {
             @as(f32, @floatFromInt(LookUpTable.height)),
     ));
     prog.uniforms.colour.sendVec4(vec.Vec4.ones());
+    prog.uniforms.alloc = allocator;
 
     prog.uniforms.char_quad = obj.Object{
         .pos = vec.Vec3.zeros(),
         .roation = vec.Vec3.zeros(),
         .scale = vec.Vec3.ones(),
-        .render = render.Renderer{
-            .render_2d = render.Render2d.init(),
-        },
+        .render = try render.quad2dRenderer(allocator),
         .texture = null,
     };
 

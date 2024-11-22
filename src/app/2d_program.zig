@@ -25,7 +25,7 @@ pub const BasicUniforms2d = struct {
         self.colour.sendVec4(vec.init4(1, 0, 1, 1));
 
         gl.disable(gl.DEPTH_TEST);
-        object.render.render_2d.render();
+        object.render.drawInstanced();
         gl.enable(gl.DEPTH_TEST);
     }
 
@@ -33,6 +33,11 @@ pub const BasicUniforms2d = struct {
     pub fn reload(self: Self) void {
         basic_2d_program_logger.info("reloaded basic 2d program", .{});
         self.colour.sendVec4(vec.Vec4.ones());
+    }
+
+    pub fn unload(self: Self) void {
+        _ = self;
+        return;
     }
 };
 
