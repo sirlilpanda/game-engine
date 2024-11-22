@@ -107,7 +107,7 @@ pub const TimeStamp = struct {
                 self.min,
                 self.sec,
             });
-        } else if (std.mem.eql(u8, fmt, "time")) {
+        } else if (std.mem.eql(u8, fmt, "timec")) {
             var colour_printer = String.initNoString();
             colour_printer.setFgColour(Colour.rangeToColour(0, 23, @intCast(self.hour)));
 
@@ -122,6 +122,12 @@ pub const TimeStamp = struct {
 
             colour_printer.setFgColour(Colour.rangeToColour(0, 60, @intCast(self.sec)));
             try writer.print("{start}{d:.2}{end}", .{ colour_printer, self.sec, colour_printer });
+        } else if (std.mem.eql(u8, fmt, "time")) {
+            try writer.print("{d:.2}:{d:.2}:{d:.2}", .{
+                self.hour,
+                self.min,
+                self.sec,
+            });
         } else if (std.mem.eql(u8, fmt, "date")) {
             try writer.print("{d:.4}-{d:.2}-{d:.2}", .{
                 self.day,
