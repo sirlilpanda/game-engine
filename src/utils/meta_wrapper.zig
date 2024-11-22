@@ -17,8 +17,8 @@ pub fn structCheck(comptime type_to_check: type, comptime example_interface_type
 pub fn interfaceCheck(comptime type_to_check: type, comptime example_interface_type: type) bool {
     inline for (@typeInfo(example_interface_type).Struct.decls) |declaration| {
         if (comptime !trait_check(type_to_check, declaration.name)) {
-            @compileLog(@typeName(type_to_check) ++ " doesnt have " ++ declaration.name);
-            return false;
+            @compileError(@typeName(type_to_check) ++ " doesnt have " ++ declaration.name);
+            // return false;
         }
     }
     return true;
