@@ -163,6 +163,7 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
                 if (s) |sha| sha.unload();
             }
             gl.deleteProgram(self.program_id);
+            self.uniforms.unload();
         }
 
         /// renders all objects
@@ -170,6 +171,8 @@ pub fn Program(comptime unifrom_type: type, comptime amount_of_object: u32) type
             for (self.objects) |object| {
                 if (object) |o| self.uniforms.draw(self.camera, o);
             }
+            // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            // gl.flush();
         }
 
         /// only renders the object at the given index

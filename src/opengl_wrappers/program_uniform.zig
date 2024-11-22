@@ -26,4 +26,10 @@ pub const ExampleUniform = struct {
         example_unifrom.err("do not use this it does nothing, please create your own\n", .{});
         _ = self;
     }
+
+    /// for if you unifrom wants some dynamic memory
+    pub fn unload(self: Self) void {
+        example_unifrom.err("do not use this it does nothing, please create your own\n", .{});
+        _ = self;
+    }
 };
