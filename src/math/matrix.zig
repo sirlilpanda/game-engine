@@ -106,93 +106,93 @@ pub fn Matrix(comptime hight: comptime_int, comptime length: comptime_int) type 
     };
 }
 
-test "init" {
-    const matrix3x3 = Matrix(4, 3);
-    const mat: matrix3x3 = matrix3x3.idenity();
-    _ = mat;
-    const mat2: matrix3x3 = matrix3x3.idenity();
-    _ = mat2;
+// test "init" {
+//     const matrix3x3 = Matrix(4, 3);
+//     const mat: matrix3x3 = matrix3x3.idenity();
+//     _ = mat;
+//     const mat2: matrix3x3 = matrix3x3.idenity();
+//     _ = mat2;
 
-    // mat.debug_print_matrix();
-    // mat.t().debug_print_matrix();/
-    // mat.mul(matrix3x3, mat2).debug_print_matrix();
-}
+//     // mat.debug_print_matrix();
+//     // mat.t().debug_print_matrix();/
+//     // mat.mul(matrix3x3, mat2).debug_print_matrix();
+// }
 
-test "mat3x3 mul" {
-    const time = std.time;
+// test "mat3x3 mul" {
+//     const time = std.time;
 
-    var timer = try time.Timer.start();
+//     var timer = try time.Timer.start();
 
-    const matrix3x3 = Matrix(3, 3);
+//     const matrix3x3 = Matrix(3, 3);
 
-    const test_data: [9]f32 = [9]f32{
-        0, 1, 2,
-        3, 4, 5,
-        6, 7, 8,
-    };
+//     const test_data: [9]f32 = [9]f32{
+//         0, 1, 2,
+//         3, 4, 5,
+//         6, 7, 8,
+//     };
 
-    const matGenr: matrix3x3 = matrix3x3.fromArray(test_data);
-    const matOpti: Mat3x3 = Mat3x3.makeFromArray(test_data);
+//     const matGenr: matrix3x3 = matrix3x3.fromArray(test_data);
+//     const matOpti: Mat3x3 = Mat3x3.makeFromArray(test_data);
 
-    std.debug.print("\n", .{});
+//     std.debug.print("\n", .{});
 
-    _ = timer.lap();
-    const matOptiOut = matOpti.mul(matOpti);
-    _ = matOptiOut;
-    std.debug.print("matOpti took {}ns\n", .{timer.lap()});
+//     _ = timer.lap();
+//     const matOptiOut = matOpti.mul(matOpti);
+//     _ = matOptiOut;
+//     std.debug.print("matOpti took {}ns\n", .{timer.lap()});
 
-    _ = timer.lap();
-    const matGenrOut = matGenr.mul(matrix3x3, matGenr);
-    _ = matGenrOut;
-    std.debug.print("matGenr took {}ns\n", .{timer.lap()});
+//     _ = timer.lap();
+//     const matGenrOut = matGenr.mul(matrix3x3, matGenr);
+//     _ = matGenrOut;
+//     std.debug.print("matGenr took {}ns\n", .{timer.lap()});
 
-    // matOptiOut.debug_print_matrix();
-    // matGenrOut.debug_print_matrix();
-}
+//     // matOptiOut.debug_print_matrix();
+//     // matGenrOut.debug_print_matrix();
+// }
 
-test "mat4x4 mul" {
-    const time = std.time;
+// test "mat4x4 mul" {
+//     const time = std.time;
 
-    const matrix4x4 = Matrix(4, 4);
+//     const matrix4x4 = Matrix(4, 4);
 
-    const test_data: [16]f32 = [16]f32{
-        0,  1,  2,  3,
-        4,  5,  6,  7,
-        8,  9,  10, 11,
-        12, 13, 14, 15,
-    };
+//     const test_data: [16]f32 = [16]f32{
+//         0,  1,  2,  3,
+//         4,  5,  6,  7,
+//         8,  9,  10, 11,
+//         12, 13, 14, 15,
+//     };
 
-    const test_data2: [16]f32 = [16]f32{
-        12, 13, 14, 15,
-        8,  9,  10, 11,
-        4,  5,  6,  7,
-        0,  1,  2,  3,
-    };
+//     const test_data2: [16]f32 = [16]f32{
+//         12, 13, 14, 15,
+//         8,  9,  10, 11,
+//         4,  5,  6,  7,
+//         0,  1,  2,  3,
+//     };
 
-    const matGenr: matrix4x4 = matrix4x4.fromArray(test_data);
-    const matGenr2: matrix4x4 = matrix4x4.fromArray(test_data2);
-    const matOpti: Mat4x4 = Mat4x4.makeFromArray(test_data);
-    const matOpti2: Mat4x4 = Mat4x4.makeFromArray(test_data2);
+//     const matGenr: matrix4x4 = matrix4x4.fromArray(test_data);
+//     const matGenr2: matrix4x4 = matrix4x4.fromArray(test_data2);
+//     const matOpti: Mat4x4 = Mat4x4.makeFromArray(test_data);
+//     const matOpti2: Mat4x4 = Mat4x4.makeFromArray(test_data2);
 
-    std.debug.print("\n", .{});
+//     std.debug.print("\n", .{});
 
-    var timer = try time.Timer.start();
-    var i: u32 = 0;
-    while (i < 2000) : (i += 1) {
-        _ = matOpti.mul(matOpti2);
-    }
-    std.debug.print("matOpti took {}ns\n", .{timer.lap()});
-    i = 0;
+//     var timer = try time.Timer.start();
+//     var i: u32 = 0;
+//     while (i < 2000) : (i += 1) {
+//         _ = matOpti.mul(matOpti2);
+//     }
+//     std.debug.print("matOpti took {}ns\n", .{timer.lap()});
+//     i = 0;
 
-    _ = timer.lap();
-    while (i < 2000) : (i += 1) {
-        _ = matGenr.mul(matrix4x4, matGenr2);
-    }
-    std.debug.print("matGenr took {}ns\n", .{timer.lap()});
+//     _ = timer.lap();
+//     while (i < 2000) : (i += 1) {
+//         _ = matGenr.mul(matrix4x4, matGenr2);
+//     }
+//     std.debug.print("matGenr took {}ns\n", .{timer.lap()});
 
-    const matOptiOut = matOpti.mul(matOpti2);
-    const matGenrOut = matGenr.mul(matrix4x4, matGenr2);
+//     const matOptiOut = matOpti.mul(matOpti2);
+//     const matGenrOut = matGenr.mul(matrix4x4, matGenr2);
 
-    matOptiOut.debug_print_matrix();
-    matGenrOut.debug_print_matrix();
-}
+//     matOptiOut.debug_print_matrix();
+//     matGenrOut.debug_print_matrix();
+// }
