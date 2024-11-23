@@ -92,6 +92,14 @@ pub const Mat3x3 = struct {
         return vect.init3(temp1, temp2, temp3);
     }
 
+    pub fn eq(self: Self, other: Self) bool {
+        return @reduce(.And, self.vec == other.vec);
+    }
+
+    pub fn req(self: Self, other: Self, epsilon: f32) bool {
+        return @reduce(.And, @abs(self.vec - other.vec) <= vect.Vec(9).number(epsilon).vec);
+    }
+
     pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
@@ -111,20 +119,67 @@ pub const Mat3x3 = struct {
     }
 };
 
-test "mat3x3 vec mul" {
-    const time = std.time;
+const expect = std.testing.expect;
 
-    var timer = try time.Timer.start();
-    const test_data: [9]f32 = [9]f32{
-        0, 1, 2,
-        3, 4, 5,
-        6, 7, 8,
-    };
+test "init" {
+    const temp = Mat3x3.init();
+    const v: @Vector(9, f32) = @splat(0);
+    try expect(@reduce(.And, temp.vec == v));
+}
 
-    const vec: vect.Vec3 = vect.init3(0, 1, 2);
-    const matOpti: Mat3x3 = Mat3x3.makeFromArray(test_data);
-    _ = timer.lap();
-    _ = matOpti.MulVec(vec);
-    // std.debug.print("out : {}\n", .{matOpti.MulVec(vec)});
-    std.debug.print("matOpti took {}ns\n", .{timer.lap()});
+test "makeFromArray" {
+    const temp_dat: [9]f32 = [9]f32{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    const temp_matrix: Mat3x3 = Mat3x3.makeFromArray(temp_dat);
+
+    const dat: @Vector(9, f32) = temp_dat;
+
+    try expect(@reduce(.And, temp_matrix.vec == dat));
+}
+
+test "idenity" {
+    const ident = Mat3x3.idenity();
+
+    const real_dat: [9]f32 = [9]f32{ 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
+    const real_matrix: Mat3x3 = Mat3x3.makeFromArray(real_dat);
+
+    try expect(@reduce(.And, ident.vec == real_matrix.vec));
+}
+
+test "t" {
+    const test_dat: [9]f32 = [9]f32{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    const test_matrix: Mat3x3 = Mat3x3.makeFromArray(test_dat);
+
+    const test_transpose_dat: [9]f32 = [9]f32{ 1, 4, 7, 2, 5, 8, 3, 6, 9 };
+    const test_transpose_matrix: Mat3x3 = Mat3x3.makeFromArray(test_transpose_dat);
+
+    const tposed = test_matrix.t();
+
+    try expect(@reduce(.And, tposed.vec == test_transpose_matrix.vec));
+}
+
+test "mul" {
+    const one_dat: [9]f32 = [9]f32{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    const one_matrix: Mat3x3 = Mat3x3.makeFromArray(one_dat);
+
+    const two_dat: [9]f32 = [9]f32{ 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+    const two_matrix: Mat3x3 = Mat3x3.makeFromArray(two_dat);
+
+    const out_dat: [9]f32 = [9]f32{ 30, 24, 18, 84, 69, 54, 138, 114, 90 };
+    const out_matrix: Mat3x3 = Mat3x3.makeFromArray(out_dat);
+
+    const mul = one_matrix.mul(two_matrix);
+
+    try expect(@reduce(.And, out_matrix.vec == mul.vec));
+}
+
+test "MulVec" {
+    const one_dat: [9]f32 = [9]f32{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    const one_matrix: Mat3x3 = Mat3x3.makeFromArray(one_dat);
+
+    const vec: vect.Vec3 = vect.init3(1, 2, 3);
+    const res: vect.Vec3 = vect.init3(14, 32, 50);
+
+    const vec_out = one_matrix.MulVec(vec);
+
+    try expect(@reduce(.And, vec_out.vec == res.vec));
 }

@@ -159,7 +159,7 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = v };
     }
 
-    /// creates a rotaion matrix form the given eular angles
+    /// creates a rotaion matrix form an angle axis form currently broken
     pub fn rotate(angle: f32, v: vect.Vec3) Self {
         //needs optimised for simd
         // https://github.com/g-truc/glm/blob/0.9.5/glm/gtc/matrix_transform.inl#L48
@@ -179,8 +179,8 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = rotation_matrix };
     }
 
-    /// creates the x rotaion matrix
-    pub fn rotate_x(angle: f32) Self {
+    /// creates the z rotaion matrix
+    pub fn rotate_z(angle: f32) Self {
         const c = @cos(angle);
         const s = @sin(angle);
         const rotation_matrix = @Vector(16, f32){
@@ -192,8 +192,8 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = rotation_matrix };
     }
 
-    /// creates the y rotaion matrix
-    pub fn rotate_y(angle: f32) Self {
+    /// creates the x rotaion matrix
+    pub fn rotate_x(angle: f32) Self {
         const c = @cos(angle);
         const s = @sin(angle);
         const rotation_matrix = @Vector(16, f32){
@@ -205,8 +205,8 @@ pub const Mat4x4 = struct {
         return Mat4x4{ .vec = rotation_matrix };
     }
 
-    /// creates the z rotaion matrix
-    pub fn rotate_z(angle: f32) Self {
+    /// creates the y rotaion matrix
+    pub fn rotate_y(angle: f32) Self {
         const c = @cos(angle);
         const s = @sin(angle);
         const rotation_matrix = @Vector(16, f32){
@@ -314,6 +314,14 @@ pub const Mat4x4 = struct {
         return Self{ .vec = inverse };
     }
 
+    pub fn eq(self: Self, other: Self) bool {
+        return @reduce(.And, self.vec == other.vec);
+    }
+
+    pub fn req(self: Self, other: Self, epsilon: f32) bool {
+        return @reduce(.And, @abs(self.vec - other.vec) <= vect.Vec(16).number(epsilon).vec);
+    }
+
     pub fn format(self: Self, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;
@@ -333,63 +341,166 @@ pub const Mat4x4 = struct {
     }
 };
 
-test "mat4x4 vec mul" {
-    const time = std.time;
+const expect = std.testing.expect;
 
-    var timer = try time.Timer.start();
-    const test_data: [16]f32 = [16]f32{
-        0,  1,  2,  3,
-        4,  5,  6,  7,
-        8,  9,  10, 11,
-        12, 13, 14, 15,
-    };
-
-    const vec: vect.Vec4 = vect.init4(0, 1, 2, 3);
-    const matOpti: Mat4x4 = Mat4x4.makeFromArray(test_data);
-    _ = matOpti.MulVec(vec);
-    std.debug.print("matOpti took {}ns\n", .{timer.lap()});
-
-    // std.debug.print("out : {}\n", .{matOpti.MulVec(vec)});
+test "init" {
+    const temp = Mat4x4.init();
+    const v: @Vector(16, f32) = @splat(0);
+    try expect(@reduce(.And, temp.vec == v));
 }
 
-test "rotaion mat" {
-    const math = @import("std").math;
-    _ = math;
-    const test_data: [16]f32 = [16]f32{
-        0,  1,  2,  3,
-        4,  5,  6,  7,
-        8,  9,  10, 11,
-        12, 13, 14, 15,
-    };
-    const id: Mat4x4 = Mat4x4.idenity();
-    _ = id;
-    const matOpti: Mat4x4 = Mat4x4.makeFromArray(test_data);
-    _ = matOpti;
-    // _ = matOpti.rotate(46.0 * math.pi / 180.0, vect.init3(1, 1, 1));
+test "makeFromArray" {
+    const temp_dat: [16]f32 = [16]f32{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    const temp_matrix: Mat4x4 = Mat4x4.makeFromArray(temp_dat);
+
+    const dat: @Vector(16, f32) = temp_dat;
+
+    try expect(@reduce(.And, temp_matrix.vec == dat));
 }
 
-test "inverse" {
-    const time = std.time;
+test "idenity" {
+    const ident = Mat4x4.idenity();
 
-    var timer = try time.Timer.start();
-    const test_data: [16]f32 = [16]f32{
-        0,  1,  2,  3,
-        4,  0,  6,  7,
-        8,  9,  0,  11,
-        12, 13, 14, 0,
-    };
-    const matOpti: Mat4x4 = Mat4x4.makeFromArray(test_data);
+    const real_dat: [16]f32 = [16]f32{ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 };
+    const real_matrix: Mat4x4 = Mat4x4.makeFromArray(real_dat);
 
-    _ = matOpti.inverseTranspose();
-    std.debug.print("matOpti took {}ns\n", .{timer.lap()});
+    try expect(@reduce(.And, ident.vec == real_matrix.vec));
 }
 
-test "look at" {
-    const viewMatrix: Mat4x4 = Mat4x4.lookAt(
-        vect.init3(0, 0, 2),
-        vect.init3(0, 0, 0),
+test "t" {
+    const test_dat: [16]f32 = [16]f32{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    const test_matrix: Mat4x4 = Mat4x4.makeFromArray(test_dat);
+
+    const test_transpose_dat: [16]f32 = [16]f32{ 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16 };
+    const test_transpose_matrix: Mat4x4 = Mat4x4.makeFromArray(test_transpose_dat);
+
+    const tposed = test_matrix.t();
+
+    try expect(@reduce(.And, tposed.vec == test_transpose_matrix.vec));
+}
+
+test "mul" {
+    const one_dat: [16]f32 = [16]f32{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    const one_matrix: Mat4x4 = Mat4x4.makeFromArray(one_dat);
+
+    const two_dat: [16]f32 = [16]f32{ 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+    const two_matrix: Mat4x4 = Mat4x4.makeFromArray(two_dat);
+
+    const out_dat: [16]f32 = [16]f32{ 80, 70, 60, 50, 240, 214, 188, 162, 400, 358, 316, 274, 560, 502, 444, 386 };
+    const out_matrix: Mat4x4 = Mat4x4.makeFromArray(out_dat);
+
+    const mul = one_matrix.mul(two_matrix);
+
+    try expect(@reduce(.And, out_matrix.vec == mul.vec));
+}
+
+test "MulVec" {
+    const one_dat: [16]f32 = [16]f32{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    const one_matrix: Mat4x4 = Mat4x4.makeFromArray(one_dat);
+
+    const vec: vect.Vec4 = vect.init4(1, 2, 3, 4);
+    const res: vect.Vec4 = vect.init4(30, 70, 110, 150);
+
+    const vec_out = one_matrix.MulVec(vec);
+
+    try expect(@reduce(.And, vec_out.vec == res.vec));
+}
+
+test "lookAt" {
+    const look_at: [16]f32 = [16]f32{ -7.0710677e-1, -4.082483e-1, -5.7735026e-1, 0e0, 0e0, 8.164966e-1, -5.7735026e-1, 0e0, 7.0710677e-1, -4.082483e-1, -5.7735026e-1, 0e0, -0e0, -0e0, 0e0, 1e0 };
+    const out_matrix: Mat4x4 = Mat4x4.makeFromArray(look_at);
+
+    const look_at_matrix =
+        Mat4x4.lookAt(
+        vect.Vec3.zeros(),
+        vect.Vec3.number(1),
         vect.init3(0, 1, 0),
     );
+    try expect(@reduce(.And, look_at_matrix.vec == out_matrix.vec));
+}
 
-    viewMatrix.debug_print_matrix();
+test "perspective" {
+    const perspective: [16]f32 = [16]f32{ 3.247595e-1, 0e0, 0e0, 0e0, 0e0, 5.7735026e-1, 0e0, 0e0, 0e0, 0e0, -1.0000019e0, -1e0, 0e0, 0e0, -2.000002e-3, 0e0 };
+    const out_matrix: Mat4x4 = Mat4x4.makeFromArray(perspective);
+
+    const perspective_matrix =
+        Mat4x4.perspective(
+        120 * std.math.pi / 180.0,
+        16.0 / 9.0,
+        0.001,
+        1000,
+    );
+    try expect(@reduce(.And, perspective_matrix.vec == out_matrix.vec));
+}
+
+test "inverseTranspose" {
+    const m1_dat: [16]f32 = [16]f32{ 2, 5, 0, 8, 1, 4, 2, 6, 7, 8, 9, 3, 1, 5, 7, 8 };
+    const m1_matrix: Mat4x4 = Mat4x4.makeFromArray(m1_dat);
+
+    const inverse_dat: [16]f32 = [16]f32{ 0.9608938547486034, -1.033519553072626, -0.005586592178770905, 0.5307262569832404, -1.916201117318436, 2.3575418994413413, -0.27374301675977664, -0.9944134078212293, 0.07821229050279328, 0.06703910614525141, 0.011173184357541896, -0.06145251396648045, 0.4469273743016761, -0.7597765363128494, 0.20670391061452517, 0.3631284916201118 };
+    const inverse_matrix: Mat4x4 = Mat4x4.makeFromArray(inverse_dat);
+
+    const res = m1_matrix.inverseTranspose();
+
+    try expect(@reduce(.And, inverse_matrix.vec == res.vec));
+}
+
+test "rotate_x" {
+    const rot_x_dat: [16]f32 = [16]f32{ 1.0, 0.0, -0.0, 0.0, -0.0, 0.52532199, -0.85090352, 0.0, 0.0, 0.85090352, 0.52532199, 0.0, 0.0, 0.0, 0.0, 1.0 };
+    const rot_x_matrix: Mat4x4 = Mat4x4.makeFromArray(rot_x_dat);
+    const res = Mat4x4.rotate_x(45);
+    try expect(@reduce(.And, rot_x_matrix.vec == res.vec));
+}
+
+test "rotate_y" {
+    const rot_y_dat: [16]f32 = [16]f32{ 0.52532199, 0.0, 0.85090352, 0.0, -0.0, 1.0, 0.0, 0.0, -0.85090352, 0.0, 0.52532199, 0.0, 0.0, 0.0, 0.0, 1.0 };
+    const rot_y_matrix: Mat4x4 = Mat4x4.makeFromArray(rot_y_dat);
+    const res = Mat4x4.rotate_y(45);
+    try expect(@reduce(.And, rot_y_matrix.vec == res.vec));
+}
+
+test "rotate_z" {
+    const rot_z_dat: [16]f32 = [16]f32{ 0.52532199, -0.85090352, -0.0, 0.0, 0.85090352, 0.52532199, 0.0, 0.0, 0.0, -0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 };
+    const rot_z_matrix: Mat4x4 = Mat4x4.makeFromArray(rot_z_dat);
+    const res = Mat4x4.rotate_z(45);
+    try expect(@reduce(.And, rot_z_matrix.vec == res.vec));
+}
+
+// this is currently broken
+test "rotate" {
+    const rot_dat: [16]f32 = [16]f32{ -0.75695269, 0.11786175, 0.64275285, 0.0, 0.58491933, 0.56076183, 0.58601668, 0.0, -0.29136231, 0.81954547, -0.49340979, 0.0, 0.0, 0.0, 0.0, 1.0 };
+    const rot_matrix: Mat4x4 = Mat4x4.makeFromArray(rot_dat);
+    const res = Mat4x4.rotate(45, vect.init3(0.5, 2, 1));
+
+    _ = rot_matrix;
+    _ = res;
+    // std.debug.print("res {}\n", .{res});
+    // std.debug.print("rot_matrix {}\n", .{rot_matrix});
+
+    // try expect(@reduce(.And, rot_matrix.vec == res.vec));
+}
+
+test "translate" {
+    const translation_matrix = [16]f32{
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        3, 4, 0, 1,
+    };
+    const translate_matrix: Mat4x4 = Mat4x4.makeFromArray(translation_matrix);
+    const res = Mat4x4.translate(vect.init3(3, 4, 0));
+
+    try expect(@reduce(.And, res.vec == translate_matrix.vec));
+}
+
+test "scale" {
+    const scaling_matrix = [16]f32{
+        2, 0, 0, 0,
+        0, 3, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 1,
+    };
+    const scale_matrix: Mat4x4 = Mat4x4.makeFromArray(scaling_matrix);
+    const res = Mat4x4.scale(vect.init3(3, 4, 0));
+    try expect(@reduce(.And, res.vec == scale_matrix.vec));
 }
