@@ -2,7 +2,7 @@ ngl the structure of this project is based off vibes
 # game-engine
 game engine written in zig, this was made from scratch using a glfw window and opengl, all math and other file loading was programed myself. before you ask yes i am insane. so what makes this game engine differnt from the other, well let me tell you this game engine is shit, but pretty fast. Although in all honesty, i do use zig features for some cool features within this game engine such as complie time known uniforms and programs, since these should be known at complie time.
 
-![image form the game engine](res/screenshot.png)
+![image form the game engine](res/game-dawh.gif)
 
 
 # project structure
@@ -33,12 +33,10 @@ currently the project has 4 main directories:
 - rendering text to the screen
 - screenshots, as can be seen above
 - coloured printing to the terimal, makes its easier to read matrixs and vectors
+- custom opengl programs at complie time
 - an incredibly colourful logging systems, colour of scope is determined using the hash of the scopes name, computed at comp time of course
 ![alt text](res/image.png)
 
-## the engine also supports more advance fetures such as:
-- allowing multiple opengl programs
-- fully custom opengl programs at complie time
 
 # how to run
 currently the game engine uses [zig version](https://machengine.org/docs/nominated-zig/#202450-mach) `0.13.0-dev.351+64ef45eb0` as this is the lastest version that can complie `zig glfw`.
